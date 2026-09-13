@@ -4,6 +4,10 @@ let beforePhotoData = createEmptyPhotos();
 let afterPhotoData = createEmptyPhotos();
 
 let finishingTransferId = null;
+let checklistTransferId = null;
+let editingTransferId = null;
+
+let timerInterval = null;
 
 
 const photoTypes = [
@@ -24,9 +28,77 @@ const photoNames = {
 };
 
 
-// ============================
+// =========================================================
+// ENNEN AJOA - TARKISTUSLISTA
+// =========================================================
+
+const preDriveChecklist = [
+    {
+        id: "outside",
+        icon: "🚗",
+        title: "Auto ulkoisesti tarkistettu",
+        description: "Korin ja auton yleinen kunto tarkistettu."
+    },
+    {
+        id: "tires",
+        icon: "🛞",
+        title: "Renkaat tarkistettu",
+        description: "Renkaat näyttävät olevan kunnossa."
+    },
+    {
+        id: "dashboard",
+        icon: "📊",
+        title: "Mittaristo tarkistettu",
+        description: "Mittaristo, polttoaine / akku ja varoitusvalot tarkistettu."
+    },
+    {
+        id: "damage",
+        icon: "🔎",
+        title: "Vauriot tarkistettu",
+        description: "Auton olemassa olevat vauriot tarkistettu."
+    },
+    {
+        id: "photos",
+        icon: "📸",
+        title: "Ennen ajoa -kuvat otettu",
+        description: "Tarvittavat kuvat autosta on otettu."
+    },
+    {
+        id: "keys",
+        icon: "🔑",
+        title: "Avaimet mukana",
+        description: "Auton avaimet ovat mukana."
+    },
+    {
+        id: "documents",
+        icon: "📄",
+        title: "Asiakirjat / tavarat mukana",
+        description: "Tarvittavat asiakirjat ja tavarat ovat mukana."
+    },
+    {
+        id: "start",
+        icon: "▶️",
+        title: "Auto käynnistyy normaalisti",
+        description: "Auto käynnistyy ja toimii normaalisti."
+    },
+    {
+        id: "destination",
+        icon: "🏁",
+        title: "Kohde tarkistettu",
+        description: "Oikea kohde ja toimituspaikka varmistettu."
+    },
+    {
+        id: "route",
+        icon: "🗺️",
+        title: "Reitti tarkistettu",
+        description: "Reitti lähtöpaikasta kohteeseen on tarkistettu."
+    }
+];
+
+
+// =========================================================
 // TYHJÄT KUVAT
-// ============================
+// =========================================================
 
 function createEmptyPhotos() {
 
@@ -40,9 +112,9 @@ function createEmptyPhotos() {
 }
 
 
-// ============================
+// =========================================================
 // NORMALISOI KUVAT
-// ============================
+// =========================================================
 
 function normalizePhotos(photos) {
 
@@ -68,7 +140,6 @@ function normalizePhotos(photos) {
     });
 
 
-    // Vanhan version "sivut"
     if (Array.isArray(photos.sivut)) {
 
         if (photos.sivut[0]) {
@@ -92,9 +163,9 @@ function normalizePhotos(photos) {
 }
 
 
-// ============================
+// =========================================================
 // KUVAMÄÄRÄ
-// ============================
+// =========================================================
 
 function getPhotoCount(photos) {
 
@@ -119,9 +190,9 @@ function getPhotoCount(photos) {
 }
 
 
-// ============================
+// =========================================================
 // ONKO KAIKKI 5 KUVAA?
-// ============================
+// =========================================================
 
 function hasAllFivePhotos(photos) {
 
@@ -141,9 +212,9 @@ function hasAllFivePhotos(photos) {
 }
 
 
-// ============================
+// =========================================================
 // LATAA SIIRROT
-// ============================
+// =========================================================
 
 function loadTransfers() {
 
@@ -175,7 +246,19 @@ function loadTransfers() {
                         afterPhotos:
                             normalizePhotos(
                                 transfer.afterPhotos
-                            )
+                            ),
+
+                        checklist:
+                            transfer.checklist || {},
+
+                        startedAt:
+                            transfer.startedAt || null,
+
+                        completedAt:
+                            transfer.completedAt || null,
+
+                        driveDuration:
+                            transfer.driveDuration || 0
 
                     })
                 );
@@ -191,12 +274,14 @@ function loadTransfers() {
     renderTransfers();
 
     updateDashboard();
+
+    startActiveTimer();
 }
 
 
-// ============================
+// =========================================================
 // TALLENNA
-// ============================
+// =========================================================
 
 function saveTransfers() {
 
@@ -207,46 +292,284 @@ function saveTransfers() {
 }
 
 
-// ============================
-// AVAA UUSI SIIRTO
-// ============================
+// =========================================================
+// AVAA UUSI SIIRTO TAI MUOKKAA SIIRTOA
+// =========================================================
 
-function openForm() {
+function openForm(id = null) {
 
-    document
-        .getElementById(
+    const modal =
+        document.getElementById(
             "formModal"
-        )
-        .classList.add(
-            "active"
+        );
+
+    const form =
+        document.getElementById(
+            "transferForm"
         );
 
 
-    const now =
-        new Date();
+    if (!modal || !form) {
+        return;
+    }
 
 
-    document.getElementById(
-        "date"
-    ).value =
-        now.toISOString()
-            .split("T")[0];
+    editingTransferId =
+        id !== null
+            ? Number(id)
+            : null;
 
 
-    document.getElementById(
-        "time"
-    ).value =
-        now.toTimeString()
-            .slice(0, 5);
+    // =====================================================
+    // MUOKKAUSTILA
+    // =====================================================
+
+    if (editingTransferId !== null) {
+
+        const transfer =
+            transfers.find(
+                t =>
+                    t.id ===
+                    editingTransferId
+            );
 
 
-    resetBeforePhotos();
+        if (!transfer) {
+
+            editingTransferId =
+                null;
+
+            return;
+        }
+
+
+        document.getElementById(
+            "customer"
+        ).value =
+            transfer.customer || "";
+
+
+        document.getElementById(
+            "date"
+        ).value =
+            transfer.date || "";
+
+
+        document.getElementById(
+            "time"
+        ).value =
+            transfer.time || "";
+
+
+        document.getElementById(
+            "vehicle"
+        ).value =
+            transfer.vehicle || "";
+
+
+        document.getElementById(
+            "from"
+        ).value =
+            transfer.from || "";
+
+
+        document.getElementById(
+            "to"
+        ).value =
+            transfer.to || "";
+
+
+        document.getElementById(
+            "notes"
+        ).value =
+            transfer.notes || "";
+
+
+        beforePhotoData =
+            normalizePhotos(
+                transfer.beforePhotos
+            );
+
+
+        renderExistingBeforePhotos();
+
+
+        updateBeforePhotoStatuses();
+
+        updateBeforePhotoCount();
+
+
+        const title =
+            modal.querySelector(
+                "h2"
+            );
+
+
+        if (title) {
+
+            title.textContent =
+                "✏️ Muokkaa siirtoa";
+        }
+
+
+        const submitButton =
+            form.querySelector(
+                ".submit-btn"
+            );
+
+
+        if (submitButton) {
+
+            submitButton.innerHTML = `
+                <span>💾</span>
+                Tallenna muutokset
+                <span class="submit-arrow">→</span>
+            `;
+        }
+
+
+    } else {
+
+        // =================================================
+        // UUSI SIIRTO
+        // =================================================
+
+        form.reset();
+
+
+        const now =
+            new Date();
+
+
+        document.getElementById(
+            "date"
+        ).value =
+            now.toISOString()
+                .split("T")[0];
+
+
+        document.getElementById(
+            "time"
+        ).value =
+            now.toTimeString()
+                .slice(0, 5);
+
+
+        resetBeforePhotos();
+
+
+        const title =
+            modal.querySelector(
+                "h2"
+            );
+
+
+        if (title) {
+
+            title.textContent =
+                "🚗 Lisää siirtoajo";
+        }
+
+
+        const submitButton =
+            form.querySelector(
+                ".submit-btn"
+            );
+
+
+        if (submitButton) {
+
+            submitButton.innerHTML = `
+                <span>🚗</span>
+                Lisää siirto
+                <span class="submit-arrow">→</span>
+            `;
+        }
+    }
+
+
+    modal.classList.add(
+        "active"
+    );
 }
 
 
-// ============================
-// SULJE UUSI SIIRTO
-// ============================
+// =========================================================
+// RENDERÖI MUOKKAUSTILAN KUVAT
+// =========================================================
+
+function renderExistingBeforePhotos() {
+
+    photoTypes.forEach(
+        type => {
+
+            const status =
+                document.getElementById(
+                    `before-${type}-status`
+                );
+
+
+            if (!status) {
+                return;
+            }
+
+
+            const hasPhoto =
+                beforePhotoData[type] &&
+                beforePhotoData[type].length > 0;
+
+
+            if (hasPhoto) {
+
+                status.textContent =
+                    "✓ Kuva lisätty";
+
+                status.classList.add(
+                    "has-photo"
+                );
+
+            } else {
+
+                status.textContent =
+                    "Ei kuvaa";
+
+                status.classList.remove(
+                    "has-photo"
+                );
+            }
+
+        }
+    );
+
+
+    renderPhotoPreview(
+        "before"
+    );
+}
+
+
+// =========================================================
+// PÄIVITÄ ENNEN-KUVIEN STATUS
+// =========================================================
+
+function updateBeforePhotoStatuses() {
+
+    photoTypes.forEach(
+        type => {
+
+            updatePhotoStatus(
+                "before",
+                type
+            );
+
+        }
+    );
+}
+
+
+// =========================================================
+// SULJE UUSI / MUOKKAUS
+// =========================================================
 
 function closeForm() {
 
@@ -266,13 +589,54 @@ function closeForm() {
         .reset();
 
 
+    editingTransferId =
+        null;
+
+
     resetBeforePhotos();
+
+
+    const title =
+        document
+            .getElementById(
+                "formModal"
+            )
+            .querySelector(
+                "h2"
+            );
+
+
+    if (title) {
+
+        title.textContent =
+            "🚗 Lisää siirtoajo";
+    }
+
+
+    const submitButton =
+        document
+            .getElementById(
+                "transferForm"
+            )
+            .querySelector(
+                ".submit-btn"
+            );
+
+
+    if (submitButton) {
+
+        submitButton.innerHTML = `
+            <span>🚗</span>
+            Lisää siirto
+            <span class="submit-arrow">→</span>
+        `;
+    }
 }
 
 
-// ============================
+// =========================================================
 // RESET ENNEN-KUVAT
-// ============================
+// =========================================================
 
 function resetBeforePhotos() {
 
@@ -331,9 +695,9 @@ function resetBeforePhotos() {
 }
 
 
-// ============================
+// =========================================================
 // LISÄÄ KUVA
-// ============================
+// =========================================================
 
 function addPhoto(
     location,
@@ -364,10 +728,11 @@ function addPhoto(
         input.files[0];
 
 
-    // Varmistetaan, että kyseessä on kuva
     if (!file.type.startsWith("image/")) {
 
-        alert("Valitse kuvatiedosto.");
+        alert(
+            "Valitse kuvatiedosto."
+        );
 
         input.value = "";
 
@@ -412,9 +777,9 @@ function addPhoto(
 }
 
 
-// ============================
+// =========================================================
 // KUVAN STATUS
-// ============================
+// =========================================================
 
 function updatePhotoStatus(
     location,
@@ -468,9 +833,9 @@ function updatePhotoStatus(
 }
 
 
-// ============================
+// =========================================================
 // ESITYSKUVAT
-// ============================
+// =========================================================
 
 function renderPhotoPreview(
     location
@@ -508,8 +873,6 @@ function renderPhotoPreview(
             list.forEach(
                 photo => {
 
-                    // TÄRKEÄ KORJAUS:
-                    // CSS käyttää photo-preview-item
                     const item =
                         document.createElement(
                             "div"
@@ -534,11 +897,32 @@ function renderPhotoPreview(
                         photoNames[type];
 
 
-                    // Estetään kuvan luonnollinen koko
-                    img.style.width = "100%";
-                    img.style.height = "100%";
-                    img.style.objectFit = "cover";
-                    img.style.display = "block";
+                    img.style.width =
+                        "100%";
+
+                    img.style.height =
+                        "100%";
+
+                    img.style.objectFit =
+                        "cover";
+
+                    img.style.display =
+                        "block";
+
+
+                    img.style.cursor =
+                        "zoom-in";
+
+
+                    img.onclick =
+                        function () {
+
+                            openImageViewer(
+                                photo,
+                                photoNames[type]
+                            );
+
+                        };
 
 
                     const label =
@@ -573,9 +957,129 @@ function renderPhotoPreview(
 }
 
 
-// ============================
+// =========================================================
+// KUVAN SUURENTAMINEN
+// =========================================================
+
+function openImageViewer(
+    image,
+    title
+) {
+
+    let viewer =
+        document.getElementById(
+            "imageViewer"
+        );
+
+
+    if (!viewer) {
+
+        viewer =
+            document.createElement(
+                "div"
+            );
+
+        viewer.id =
+            "imageViewer";
+
+
+        viewer.style.position =
+            "fixed";
+
+        viewer.style.inset =
+            "0";
+
+        viewer.style.background =
+            "rgba(0,0,0,0.92)";
+
+        viewer.style.zIndex =
+            "99999";
+
+        viewer.style.display =
+            "flex";
+
+        viewer.style.flexDirection =
+            "column";
+
+        viewer.style.alignItems =
+            "center";
+
+        viewer.style.justifyContent =
+            "center";
+
+        viewer.style.padding =
+            "20px";
+
+        viewer.style.cursor =
+            "zoom-out";
+
+
+        viewer.innerHTML = `
+
+            <div
+                id="imageViewerTitle"
+                style="
+                    color:white;
+                    font-size:16px;
+                    font-weight:700;
+                    margin-bottom:15px;
+                "
+            ></div>
+
+            <img
+                id="imageViewerImage"
+                style="
+                    max-width:95vw;
+                    max-height:80vh;
+                    object-fit:contain;
+                    border-radius:14px;
+                    box-shadow:0 20px 70px rgba(0,0,0,.5);
+                "
+            >
+
+            <div
+                style="
+                    color:rgba(255,255,255,.65);
+                    font-size:12px;
+                    margin-top:15px;
+                "
+            >
+                Sulje napauttamalla
+            </div>
+
+        `;
+
+
+        viewer.onclick =
+            function () {
+
+                viewer.remove();
+
+            };
+
+
+        document.body.appendChild(
+            viewer
+        );
+    }
+
+
+    document.getElementById(
+        "imageViewerTitle"
+    ).textContent =
+        title;
+
+
+    document.getElementById(
+        "imageViewerImage"
+    ).src =
+        image;
+}
+
+
+// =========================================================
 // ENNEN-KUVIEN MÄÄRÄ
-// ============================
+// =========================================================
 
 function updateBeforePhotoCount() {
 
@@ -599,9 +1103,9 @@ function updateBeforePhotoCount() {
 }
 
 
-// ============================
+// =========================================================
 // KOHTEEN KUVIEN MÄÄRÄ
-// ============================
+// =========================================================
 
 function updateAfterPhotoCount() {
 
@@ -661,9 +1165,9 @@ function updateAfterPhotoCount() {
 }
 
 
-// ============================
-// UUDEN SIIRRON TALLENNUS
-// ============================
+// =========================================================
+// UUDEN SIIRRON / MUOKKAUKSEN TALLENNUS
+// =========================================================
 
 document
     .getElementById(
@@ -689,6 +1193,129 @@ document
                 return;
             }
 
+
+            // =================================================
+            // MUOKATAAN VANHAA SIIRTOA
+            // =================================================
+
+            if (
+                editingTransferId !== null
+            ) {
+
+                const transfer =
+                    transfers.find(
+                        t =>
+                            t.id ===
+                            editingTransferId
+                    );
+
+
+                if (!transfer) {
+
+                    alert(
+                        "Siirtoa ei löytynyt."
+                    );
+
+                    return;
+                }
+
+
+                transfer.customer =
+                    document
+                        .getElementById(
+                            "customer"
+                        )
+                        .value
+                        .trim();
+
+
+                transfer.date =
+                    document
+                        .getElementById(
+                            "date"
+                        )
+                        .value;
+
+
+                transfer.time =
+                    document
+                        .getElementById(
+                            "time"
+                        )
+                        .value;
+
+
+                transfer.vehicle =
+                    document
+                        .getElementById(
+                            "vehicle"
+                        )
+                        .value
+                        .trim();
+
+
+                transfer.from =
+                    document
+                        .getElementById(
+                            "from"
+                        )
+                        .value
+                        .trim();
+
+
+                transfer.to =
+                    document
+                        .getElementById(
+                            "to"
+                        )
+                        .value
+                        .trim();
+
+
+                transfer.notes =
+                    document
+                        .getElementById(
+                            "notes"
+                        )
+                        .value
+                        .trim();
+
+
+                transfer.beforePhotos =
+                    normalizePhotos(
+                        beforePhotoData
+                    );
+
+
+                /*
+                 * TÄRKEÄÄ:
+                 *
+                 * Näitä ei muuteta:
+                 * - id
+                 * - status
+                 * - afterPhotos
+                 * - startedAt
+                 * - completedAt
+                 * - driveDuration
+                 * - checklist
+                 */
+
+
+                saveTransfers();
+
+                closeForm();
+
+                renderTransfers();
+
+                updateDashboard();
+
+                return;
+            }
+
+
+            // =================================================
+            // LUODAAN UUSI SIIRTO
+            // =================================================
 
             const transfer = {
 
@@ -749,7 +1376,9 @@ document
                         .trim(),
 
                 beforePhotos:
-                    beforePhotoData,
+                    normalizePhotos(
+                        beforePhotoData
+                    ),
 
                 afterPhotos:
                     createEmptyPhotos(),
@@ -761,8 +1390,17 @@ document
                     new Date()
                         .toISOString(),
 
+                startedAt:
+                    null,
+
                 completedAt:
-                    null
+                    null,
+
+                driveDuration:
+                    0,
+
+                checklist:
+                    {}
 
             };
 
@@ -784,9 +1422,9 @@ document
     );
 
 
-// ============================
+// =========================================================
 // RENDERÖI SIIRROT
-// ============================
+// =========================================================
 
 function renderTransfers() {
 
@@ -924,9 +1562,9 @@ function renderTransfers() {
 }
 
 
-// ============================
+// =========================================================
 // SIIRTO-KORTTI
-// ============================
+// =========================================================
 
 function createTransferCard(
     transfer
@@ -938,7 +1576,7 @@ function createTransferCard(
             "Suunniteltu",
 
         driving:
-            "Matkalla",
+            "Ajo käynnissä",
 
         completed:
             "Valmis"
@@ -954,6 +1592,51 @@ function createTransferCard(
         getPhotoCount(
             transfer.afterPhotos
         );
+
+
+    const drivingTime =
+        transfer.status === "driving"
+            ? formatDuration(
+                getCurrentDriveDuration(
+                    transfer
+                )
+            )
+            : formatDuration(
+                transfer.driveDuration || 0
+            );
+
+
+    const timerHtml =
+        transfer.status === "driving"
+
+            ?
+
+            `
+                <div
+                    class="live-drive-timer"
+                    data-timer-id="${transfer.id}"
+                >
+                    🟢 ${drivingTime}
+                </div>
+            `
+
+            :
+
+            transfer.driveDuration
+
+                ?
+
+                `
+                    <div
+                        class="live-drive-timer"
+                    >
+                        ⏱️ ${drivingTime}
+                    </div>
+                `
+
+                :
+
+                "";
 
 
     return `
@@ -1067,6 +1750,9 @@ function createTransferCard(
             </div>
 
 
+            ${timerHtml}
+
+
             <div class="transfer-actions">
 
                 <button
@@ -1089,13 +1775,23 @@ function createTransferCard(
                 </button>
 
 
+                <button
+                    class="action-btn"
+                    onclick="openForm(
+                        ${transfer.id}
+                    )"
+                >
+                    ✏️ Muokkaa
+                </button>
+
+
                 ${transfer.status === "planned"
 
             ?
 
             `
                             <button
-                                class="action-btn"
+                                class="action-btn start-drive-btn"
                                 onclick="changeStatus(
                                     ${transfer.id},
                                     'driving'
@@ -1149,9 +1845,9 @@ function createTransferCard(
 }
 
 
-// ============================
+// =========================================================
 // ALOITA AJO
-// ============================
+// =========================================================
 
 function changeStatus(
     id,
@@ -1169,18 +1865,20 @@ function changeStatus(
     }
 
 
-    transfer.status =
-        status;
-
-
     if (
         status === "driving"
     ) {
 
-        transfer.startedAt =
-            new Date()
-                .toISOString();
+        openPreDriveChecklist(
+            id
+        );
+
+        return;
     }
+
+
+    transfer.status =
+        status;
 
 
     saveTransfers();
@@ -1191,9 +1889,672 @@ function changeStatus(
 }
 
 
-// ============================
+// =========================================================
+// AVAA ENNEN AJOA -TARKISTUSLISTA
+// =========================================================
+
+function openPreDriveChecklist(
+    id
+) {
+
+    const transfer =
+        transfers.find(
+            t => t.id === id
+        );
+
+
+    if (!transfer) {
+        return;
+    }
+
+
+    checklistTransferId =
+        id;
+
+
+    if (!transfer.checklist) {
+
+        transfer.checklist =
+            {};
+    }
+
+
+    createChecklistModal();
+
+
+    preDriveChecklist.forEach(
+        item => {
+
+            const checkbox =
+                document.getElementById(
+                    `check-${item.id}`
+                );
+
+
+            if (checkbox) {
+
+                checkbox.checked =
+                    transfer.checklist[
+                    item.id
+                    ] === true;
+            }
+
+        }
+    );
+
+
+    updateChecklistProgress();
+
+
+    document
+        .getElementById(
+            "preDriveModal"
+        )
+        .classList.add(
+            "active"
+        );
+}
+
+
+// =========================================================
+// LUO TARKISTUSLISTA
+// =========================================================
+
+function createChecklistModal() {
+
+    let modal =
+        document.getElementById(
+            "preDriveModal"
+        );
+
+
+    if (modal) {
+        return;
+    }
+
+
+    modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "preDriveModal";
+
+
+    modal.className =
+        "modal";
+
+
+    modal.innerHTML = `
+
+        <div
+            class="modal-content"
+            style="
+                max-width:620px;
+            "
+        >
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-eyebrow">
+                        ENNEN AJOA
+                    </span>
+
+                    <h2>
+                        🚗 Tarkistuslista
+                    </h2>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="close-btn"
+                    onclick="closePreDriveChecklist()"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div
+                style="
+                    margin-bottom:20px;
+                    padding:16px;
+                    border-radius:14px;
+                    background:rgba(255,255,255,.04);
+                    border:1px solid rgba(255,255,255,.08);
+                "
+            >
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        margin-bottom:10px;
+                    "
+                >
+
+                    <strong>
+                        Ennen kuin lähdet
+                    </strong>
+
+                    <span
+                        id="checklistProgressText"
+                        style="
+                            font-weight:800;
+                        "
+                    >
+                        0 / ${preDriveChecklist.length}
+                    </span>
+
+                </div>
+
+
+                <div
+                    style="
+                        height:8px;
+                        border-radius:999px;
+                        background:rgba(255,255,255,.08);
+                        overflow:hidden;
+                    "
+                >
+
+                    <div
+                        id="checklistProgressBar"
+                        style="
+                            height:100%;
+                            width:0%;
+                            border-radius:999px;
+                            background:linear-gradient(90deg,#4f8cff,#6c63ff);
+                            transition:.2s;
+                        "
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="preDriveChecklistItems"
+                style="
+                    display:flex;
+                    flex-direction:column;
+                    gap:10px;
+                "
+            >
+
+                ${preDriveChecklist.map(
+        item => `
+
+                        <label
+                            for="check-${item.id}"
+                            style="
+                                display:flex;
+                                align-items:center;
+                                gap:13px;
+                                padding:15px;
+                                border-radius:14px;
+                                border:1px solid rgba(255,255,255,.08);
+                                background:rgba(255,255,255,.035);
+                                cursor:pointer;
+                                transition:.2s;
+                            "
+                        >
+
+                            <input
+                                type="checkbox"
+                                id="check-${item.id}"
+                                onchange="updateChecklistProgress()"
+                                style="
+                                    width:20px;
+                                    height:20px;
+                                    flex:0 0 auto;
+                                    accent-color:#5d8cff;
+                                "
+                            >
+
+                            <span
+                                style="
+                                    font-size:22px;
+                                    flex:0 0 auto;
+                                "
+                            >
+                                ${item.icon}
+                            </span>
+
+                            <span
+                                style="
+                                    display:flex;
+                                    flex-direction:column;
+                                    gap:3px;
+                                "
+                            >
+
+                                <strong>
+                                    ${item.title}
+                                </strong>
+
+                                <small
+                                    style="
+                                        opacity:.55;
+                                        line-height:1.4;
+                                    "
+                                >
+                                    ${item.description}
+                                </small>
+
+                            </span>
+
+                        </label>
+
+                    `
+    ).join("")}
+
+            </div>
+
+
+            <button
+                type="button"
+                id="startDrivingConfirmBtn"
+                class="submit-btn"
+                onclick="confirmStartDriving()"
+                disabled
+                style="
+                    margin-top:20px;
+                "
+            >
+
+                <span>
+                    🚗
+                </span>
+
+                Aloita ajo
+
+                <span class="submit-arrow">
+                    →
+                </span>
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+}
+
+
+// =========================================================
+// TARKISTUSLISTAN EDISTYMINEN
+// =========================================================
+
+function updateChecklistProgress() {
+
+    const transfer =
+        transfers.find(
+            t => t.id === checklistTransferId
+        );
+
+
+    if (!transfer) {
+        return;
+    }
+
+
+    if (!transfer.checklist) {
+
+        transfer.checklist =
+            {};
+    }
+
+
+    let checked = 0;
+
+
+    preDriveChecklist.forEach(
+        item => {
+
+            const checkbox =
+                document.getElementById(
+                    `check-${item.id}`
+                );
+
+
+            if (
+                checkbox &&
+                checkbox.checked
+            ) {
+
+                checked++;
+
+                transfer.checklist[
+                    item.id
+                ] = true;
+
+            } else if (checkbox) {
+
+                transfer.checklist[
+                    item.id
+                ] = false;
+            }
+
+        }
+    );
+
+
+    const total =
+        preDriveChecklist.length;
+
+
+    const percentage =
+        Math.round(
+            (checked / total) * 100
+        );
+
+
+    const text =
+        document.getElementById(
+            "checklistProgressText"
+        );
+
+
+    if (text) {
+
+        text.textContent =
+            `${checked} / ${total}`;
+    }
+
+
+    const bar =
+        document.getElementById(
+            "checklistProgressBar"
+        );
+
+
+    if (bar) {
+
+        bar.style.width =
+            `${percentage}%`;
+    }
+
+
+    const button =
+        document.getElementById(
+            "startDrivingConfirmBtn"
+        );
+
+
+    if (button) {
+
+        button.disabled =
+            checked !== total;
+
+        if (checked === total) {
+
+            button.innerHTML = `
+                <span>🚗</span>
+                Kaikki tarkistettu – aloita ajo
+                <span class="submit-arrow">→</span>
+            `;
+
+        } else {
+
+            button.innerHTML = `
+                <span>🔒</span>
+                Tarkista kaikki kohdat
+            `;
+        }
+    }
+
+
+    saveTransfers();
+}
+
+
+// =========================================================
+// VAHVISTA AJO
+// =========================================================
+
+function confirmStartDriving() {
+
+    const transfer =
+        transfers.find(
+            t => t.id === checklistTransferId
+        );
+
+
+    if (!transfer) {
+        return;
+    }
+
+
+    const allChecked =
+        preDriveChecklist.every(
+            item =>
+                transfer.checklist &&
+                transfer.checklist[
+                item.id
+                ] === true
+        );
+
+
+    if (!allChecked) {
+
+        alert(
+            "Tarkista kaikki kohdat ennen ajoa."
+        );
+
+        return;
+    }
+
+
+    transfer.status =
+        "driving";
+
+
+    transfer.startedAt =
+        new Date()
+            .toISOString();
+
+
+    transfer.completedAt =
+        null;
+
+
+    transfer.driveDuration =
+        0;
+
+
+    saveTransfers();
+
+
+    closePreDriveChecklist();
+
+
+    renderTransfers();
+
+    updateDashboard();
+
+    startActiveTimer();
+}
+
+
+// =========================================================
+// SULJE TARKISTUSLISTA
+// =========================================================
+
+function closePreDriveChecklist() {
+
+    const modal =
+        document.getElementById(
+            "preDriveModal"
+        );
+
+
+    if (modal) {
+
+        modal.classList.remove(
+            "active"
+        );
+    }
+
+
+    checklistTransferId =
+        null;
+}
+
+
+// =========================================================
+// ALOITA AKTIIVISEN AJAN SEURANTA
+// =========================================================
+
+function startActiveTimer() {
+
+    if (timerInterval) {
+
+        clearInterval(
+            timerInterval
+        );
+    }
+
+
+    timerInterval =
+        setInterval(
+            function () {
+
+                const activeTransfers =
+                    transfers.filter(
+                        transfer =>
+                            transfer.status ===
+                            "driving"
+                    );
+
+
+                if (!activeTransfers.length) {
+                    return;
+                }
+
+
+                activeTransfers.forEach(
+                    transfer => {
+
+                        const element =
+                            document.querySelector(
+                                `[data-timer-id="${transfer.id}"]`
+                            );
+
+
+                        if (!element) {
+                            return;
+                        }
+
+
+                        element.textContent =
+                            `🟢 ${formatDuration(
+                                getCurrentDriveDuration(
+                                    transfer
+                                )
+                            )}`;
+
+                    }
+                );
+
+            },
+            1000
+        );
+}
+
+
+// =========================================================
+// AJON KESTO
+// =========================================================
+
+function getCurrentDriveDuration(
+    transfer
+) {
+
+    if (
+        !transfer ||
+        !transfer.startedAt
+    ) {
+
+        return 0;
+    }
+
+
+    const start =
+        new Date(
+            transfer.startedAt
+        ).getTime();
+
+
+    const now =
+        Date.now();
+
+
+    return Math.max(
+        0,
+        Math.floor(
+            (now - start) / 1000
+        )
+    );
+}
+
+
+// =========================================================
+// MUOTOILE AIKA
+// =========================================================
+
+function formatDuration(
+    seconds
+) {
+
+    seconds =
+        Math.max(
+            0,
+            Math.floor(
+                Number(seconds) || 0
+            )
+        );
+
+
+    const hours =
+        Math.floor(
+            seconds / 3600
+        );
+
+
+    const minutes =
+        Math.floor(
+            (seconds % 3600) / 60
+        );
+
+
+    const remainingSeconds =
+        seconds % 60;
+
+
+    return [
+        String(hours).padStart(2, "0"),
+        String(minutes).padStart(2, "0"),
+        String(remainingSeconds).padStart(2, "0")
+    ].join(":");
+}
+
+
+// =========================================================
 // AVAA LOPETUS
-// ============================
+// =========================================================
 
 function openFinishModal(id) {
 
@@ -1210,6 +2571,18 @@ function openFinishModal(id) {
 
     finishingTransferId =
         id;
+
+
+    if (
+        transfer.status ===
+        "driving"
+    ) {
+
+        transfer.driveDuration =
+            getCurrentDriveDuration(
+                transfer
+            );
+    }
 
 
     afterPhotoData =
@@ -1244,9 +2617,9 @@ function openFinishModal(id) {
 }
 
 
-// ============================
+// =========================================================
 // KOHTEEN KUVIEN RESET
-// ============================
+// =========================================================
 
 function resetAfterPhotoInterface() {
 
@@ -1310,9 +2683,9 @@ function resetAfterPhotoInterface() {
 }
 
 
-// ============================
+// =========================================================
 // SULJE LOPETUS
-// ============================
+// =========================================================
 
 function closeFinishModal() {
 
@@ -1334,9 +2707,9 @@ function closeFinishModal() {
 }
 
 
-// ============================
+// =========================================================
 // LOPETA SIIRTO
-// ============================
+// =========================================================
 
 function finishTransfer() {
 
@@ -1372,8 +2745,21 @@ function finishTransfer() {
     }
 
 
+    if (
+        transfer.startedAt
+    ) {
+
+        transfer.driveDuration =
+            getCurrentDriveDuration(
+                transfer
+            );
+    }
+
+
     transfer.afterPhotos =
-        afterPhotoData;
+        normalizePhotos(
+            afterPhotoData
+        );
 
 
     transfer.status =
@@ -1396,9 +2782,9 @@ function finishTransfer() {
 }
 
 
-// ============================
+// =========================================================
 // POISTA
-// ============================
+// =========================================================
 
 function deleteTransfer(id) {
 
@@ -1438,9 +2824,9 @@ function deleteTransfer(id) {
 }
 
 
-// ============================
-// GOOGLE MAPS
-// ============================
+// =========================================================
+// GOOGLE MAPS – REITTI
+// =========================================================
 
 function openMaps(id) {
 
@@ -1480,9 +2866,9 @@ function openMaps(id) {
 }
 
 
-// ============================
+// =========================================================
 // TIEDOT
-// ============================
+// =========================================================
 
 function showDetails(id) {
 
@@ -1495,6 +2881,14 @@ function showDetails(id) {
     if (!transfer) {
         return;
     }
+
+
+    const driveDuration =
+        transfer.driveDuration
+            ? formatDuration(
+                transfer.driveDuration
+            )
+            : "Ei vielä ajettu";
 
 
     document.getElementById(
@@ -1564,6 +2958,17 @@ function showDetails(id) {
         <div class="details-row">
 
             <strong>
+                ⏱️ Ajoaika
+            </strong>
+
+            ${driveDuration}
+
+        </div>
+
+
+        <div class="details-row">
+
+            <strong>
                 📝 Lisätiedot
             </strong>
 
@@ -1617,9 +3022,9 @@ function showDetails(id) {
 }
 
 
-// ============================
+// =========================================================
 // DETAILSIEN KUVAT
-// ============================
+// =========================================================
 
 function createDetailsPhotos(
     photos
@@ -1666,6 +3071,11 @@ function createDetailsPhotos(
 
                         <div
                             class="details-photo-item"
+                            onclick="openImageViewer(
+                                '${photo}',
+                                '${photoNames[type]}'
+                            )"
+                            style="cursor:zoom-in;"
                         >
 
                             <img
@@ -1696,9 +3106,9 @@ function createDetailsPhotos(
 }
 
 
-// ============================
+// =========================================================
 // SULJE DETAILS
-// ============================
+// =========================================================
 
 function closeDetails() {
 
@@ -1712,9 +3122,9 @@ function closeDetails() {
 }
 
 
-// ============================
+// =========================================================
 // DASHBOARD
-// ============================
+// =========================================================
 
 function updateDashboard() {
 
@@ -1761,9 +3171,9 @@ function updateDashboard() {
 }
 
 
-// ============================
+// =========================================================
 // PÄIVÄMÄÄRÄ
-// ============================
+// =========================================================
 
 function formatDate(date) {
 
@@ -1787,9 +3197,9 @@ function formatDate(date) {
 }
 
 
-// ============================
+// =========================================================
 // HTML TURVALLISUUS
-// ============================
+// =========================================================
 
 function escapeHtml(text) {
 
@@ -1827,9 +3237,9 @@ function escapeHtml(text) {
 }
 
 
-// ============================
-// GOOGLE MAPS
-// ============================
+// =========================================================
+// GOOGLE MAPS – KOHTEEN HAKU
+// =========================================================
 
 function openGoogleMaps() {
 
@@ -1857,8 +3267,8 @@ function openGoogleMaps() {
 }
 
 
-// ============================
+// =========================================================
 // KÄYNNISTYS
-// ============================
+// =========================================================
 
 loadTransfers();
