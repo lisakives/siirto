@@ -12,26 +12,26 @@
 
 <body>
 
-    <!-- =========================================
+    <!-- =========================================================
          HEADER
-    ========================================== -->
+    ========================================================== -->
 
     <header class="topbar">
 
         <div class="logo">
-            <img src="logo.png" alt="SiirtoApp logo" class="logo-image">
-    
-                <div class="logo-text">
-                <strong>SiirtoApp</strong>
-                <span>Siirtoajojen hallinta</span>
+            <img src="logo.png"
+                 alt="SiirtoApp logo"
+                 class="logo-image">
+
+            <div class="logo-text">
+                <strong></strong>
+                <span></span>
             </div>
         </div>
 
-        <button
-            class="add-btn"
-            onclick="openForm()"
-            type="button"
-        >
+        <button type="button"
+                class="add-btn"
+                onclick="openForm()">
             <span>＋</span>
             <span>Uusi siirto</span>
         </button>
@@ -39,20 +39,19 @@
     </header>
 
 
-    <!-- =========================================
+    <!-- =========================================================
          MAIN
-    ========================================== -->
+    ========================================================== -->
 
     <main class="container">
 
-
-        <!-- =====================================
+        <!-- =====================================================
              WELCOME
-        ====================================== -->
+        ====================================================== -->
 
         <section class="welcome">
 
-            <div>
+            <div class="welcome-content">
 
                 <span class="welcome-label">
                     SIIRTOAJOT
@@ -70,21 +69,20 @@
 
             </div>
 
-            <div class="welcome-decoration">
+            <div class="welcome-decoration" aria-hidden="true">
                 🚗
             </div>
 
         </section>
 
 
-        <!-- =====================================
+        <!-- =====================================================
              DASHBOARD
-        ====================================== -->
+        ====================================================== -->
 
         <section class="dashboard">
 
-
-            <!-- KAIKKI -->
+            <!-- Kaikki -->
 
             <div class="stat-card">
 
@@ -93,21 +91,17 @@
                 </div>
 
                 <div class="stat-content">
-
-                    <small>
-                        Kaikki siirrot
-                    </small>
+                    <small>Kaikki siirrot</small>
 
                     <strong id="totalCount">
                         0
                     </strong>
-
                 </div>
 
             </div>
 
 
-            <!-- TÄNÄÄN -->
+            <!-- Tänään -->
 
             <div class="stat-card">
 
@@ -116,21 +110,17 @@
                 </div>
 
                 <div class="stat-content">
-
-                    <small>
-                        Tänään
-                    </small>
+                    <small>Tänään</small>
 
                     <strong id="todayCount">
                         0
                     </strong>
-
                 </div>
 
             </div>
 
 
-            <!-- MATKALLA -->
+            <!-- Matkalla -->
 
             <div class="stat-card">
 
@@ -139,21 +129,17 @@
                 </div>
 
                 <div class="stat-content">
-
-                    <small>
-                        Matkalla
-                    </small>
+                    <small>Matkalla</small>
 
                     <strong id="activeCount">
                         0
                     </strong>
-
                 </div>
 
             </div>
 
 
-            <!-- VALMIIT -->
+            <!-- Valmiit -->
 
             <div class="stat-card">
 
@@ -162,15 +148,11 @@
                 </div>
 
                 <div class="stat-content">
-
-                    <small>
-                        Valmiit
-                    </small>
+                    <small>Valmiit</small>
 
                     <strong id="completedCount">
                         0
                     </strong>
-
                 </div>
 
             </div>
@@ -178,24 +160,22 @@
         </section>
 
 
-        <!-- =====================================
+        <!-- =====================================================
              SEARCH / FILTER
-        ====================================== -->
+        ====================================================== -->
 
         <section class="toolbar">
 
             <div class="search-box">
 
-                <span class="search-icon">
+                <span class="search-icon" aria-hidden="true">
                     🔍
                 </span>
 
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Hae asiakasta, autoa tai kohdetta..."
-                    oninput="renderTransfers()"
-                >
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Hae asiakasta, autoa tai kohdetta..."
+                       oninput="renderTransfers()">
 
             </div>
 
@@ -206,11 +186,8 @@
                     Suodatus
                 </span>
 
-                <select
-                    id="filterStatus"
-                    onchange="renderTransfers()"
-                >
-
+                <select id="filterStatus"
+                        onchange="renderTransfers()">
                     <option value="all">
                         Kaikki siirrot
                     </option>
@@ -226,7 +203,6 @@
                     <option value="completed">
                         Valmiit
                     </option>
-
                 </select>
 
             </div>
@@ -234,28 +210,23 @@
         </section>
 
 
-        <!-- =====================================
-             SIIRROT
-        ====================================== -->
+        <!-- =====================================================
+             TRANSFERS
+        ====================================================== -->
 
         <section class="transfer-section">
 
             <div class="section-header">
 
                 <div>
-
-                    <h2>
-                        Siirtoajot
-                    </h2>
+                    <h2>Siirtoajot</h2>
 
                     <p>
                         Kaikki tulevat ja tehdyt siirrot
                     </p>
-
                 </div>
 
             </div>
-
 
             <div id="transferList"></div>
 
@@ -264,19 +235,16 @@
     </main>
 
 
-    <!-- =====================================================
-         UUSI SIIRTO - MODAL
-    ====================================================== -->
+    <!-- =========================================================
+         NEW TRANSFER MODAL
+    ========================================================== -->
 
-    <div
-        id="formModal"
-        class="modal"
-    >
+    <div id="formModal"
+         class="modal">
 
         <div class="modal-content">
 
-
-            <!-- HEADER -->
+            <!-- Modal header -->
 
             <div class="modal-header">
 
@@ -292,25 +260,25 @@
 
                 </div>
 
-                <button
-                    class="close-btn"
-                    onclick="closeForm()"
-                    type="button"
-                >
+                <button type="button"
+                        class="close-btn"
+                        onclick="closeForm()"
+                        aria-label="Sulje">
                     ×
                 </button>
 
             </div>
 
 
-            <!-- FORM -->
+            <!-- =================================================
+                 FORM
+            ================================================== -->
 
             <form id="transferForm">
 
-
-                <!-- =================================
-                     PERUSTIEDOT
-                ================================== -->
+                <!-- =================================================
+                     BASIC INFO
+                ================================================== -->
 
                 <div class="form-section">
 
@@ -321,15 +289,11 @@
                         </div>
 
                         <div>
-
-                            <strong>
-                                Ajotiedot
-                            </strong>
+                            <strong>Ajotiedot</strong>
 
                             <span>
                                 Syötä siirron perustiedot
                             </span>
-
                         </div>
 
                     </div>
@@ -337,8 +301,7 @@
 
                     <div class="form-grid">
 
-
-                        <!-- ASIAKAS -->
+                        <!-- Asiakas -->
 
                         <div class="form-group">
 
@@ -346,17 +309,21 @@
                                 Asiakas
                             </label>
 
-                            <input
-                                type="text"
-                                id="customer"
-                                placeholder="Esim. Bilar99e"
-                                required
-                            >
+                            <select id="customer"
+                                    required>
+                                <option value="">
+                                    Valitse asiakas
+                                </option>
+
+                                <option value="Bilar99e">
+                                    Bilar99e
+                                </option>
+                            </select>
 
                         </div>
 
 
-                        <!-- PÄIVÄ -->
+                        <!-- Päivämäärä -->
 
                         <div class="form-group">
 
@@ -364,16 +331,14 @@
                                 Päivämäärä
                             </label>
 
-                            <input
-                                type="date"
-                                id="date"
-                                required
-                            >
+                            <input type="date"
+                                   id="date"
+                                   required>
 
                         </div>
 
 
-                        <!-- AIKA -->
+                        <!-- Lähtöaika -->
 
                         <div class="form-group">
 
@@ -381,16 +346,14 @@
                                 Lähtöaika
                             </label>
 
-                            <input
-                                type="time"
-                                id="time"
-                                required
-                            >
+                            <input type="time"
+                                   id="time"
+                                   required>
 
                         </div>
 
 
-                        <!-- AUTO -->
+                        <!-- Ajoneuvo -->
 
                         <div class="form-group">
 
@@ -398,16 +361,14 @@
                                 Ajoneuvo
                             </label>
 
-                            <input
-                                type="text"
-                                id="vehicle"
-                                placeholder="Esim. VW Transporter"
-                            >
+                            <input type="text"
+                                   id="vehicle"
+                                   placeholder="Esim. VW Transporter">
 
                         </div>
 
 
-                        <!-- LÄHTÖ -->
+                        <!-- Lähtöpaikka -->
 
                         <div class="form-group full">
 
@@ -417,23 +378,35 @@
 
                             <div class="input-with-icon">
 
-                                <span>
+                                <span aria-hidden="true">
                                     📍
                                 </span>
 
-                                <input
-                                    type="text"
-                                    id="from"
-                                    placeholder="Esim. Tuusula"
-                                    required
-                                >
+                                <select id="from"
+                                        required>
+                                    <option value="">
+                                        Valitse lähtöpaikka
+                                    </option>
+
+                                    <option value="Tuusula">
+                                        Tuusula
+                                    </option>
+
+                                    <option value="Espoo">
+                                        Espoo
+                                    </option>
+
+                                    <option value="Varisto">
+                                        Varisto
+                                    </option>
+                                </select>
 
                             </div>
 
                         </div>
 
 
-                        <!-- KOHDE -->
+                        <!-- Kohde -->
 
                         <div class="form-group full">
 
@@ -443,23 +416,28 @@
 
                             <div class="input-with-icon">
 
-                                <span>
+                                <span aria-hidden="true">
                                     🏁
                                 </span>
 
-                                <input
-                                    type="text"
-                                    id="to"
-                                    placeholder="Esim. Tampere"
-                                    required
-                                >
+                                <input type="text"
+                                       id="to"
+                                       placeholder="Mihin auto viedään?"
+                                       required>
 
                             </div>
+
+                            <button type="button"
+                                    class="maps-btn"
+                                    onclick="openGoogleMaps()">
+                                <span>↗</span>
+                                Open Google Maps
+                            </button>
 
                         </div>
 
 
-                        <!-- LISÄTIEDOT -->
+                        <!-- Lisätiedot -->
 
                         <div class="form-group full">
 
@@ -467,10 +445,8 @@
                                 Lisätiedot
                             </label>
 
-                            <textarea
-                                id="notes"
-                                placeholder="Esim. avaimet toimistolla..."
-                            ></textarea>
+                            <textarea id="notes"
+                                      placeholder="Esim. avaimet toimistolla..."></textarea>
 
                         </div>
 
@@ -479,12 +455,11 @@
                 </div>
 
 
-                <!-- =================================
-                     KUVAT
-                ================================== -->
+                <!-- =================================================
+                     BEFORE PHOTOS
+                ================================================== -->
 
                 <div class="form-section photo-section">
-
 
                     <div class="photo-section-title">
 
@@ -509,11 +484,8 @@
 
                         </div>
 
-
-                        <span
-                            id="beforePhotoCount"
-                            class="photo-count"
-                        >
+                        <span id="beforePhotoCount"
+                              class="photo-count">
                             0 / 5
                         </span>
 
@@ -522,8 +494,7 @@
 
                     <div class="photo-list">
 
-
-                        <!-- MITTARISTO -->
+                        <!-- Mittaristo -->
 
                         <div class="photo-row">
 
@@ -545,26 +516,21 @@
 
                             <label class="photo-button">
 
-                                <span>
-                                    📷
-                                </span>
-
+                                <span>📷</span>
                                 Lisää
 
-                                <input
-                                    type="file"
-                                    id="before-mittaristo"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onchange="addPhoto('before', 'mittaristo')"
-                                >
+                                <input type="file"
+                                       id="before-mittaristo"
+                                       accept="image/*"
+                                       capture="environment"
+                                       onchange="addPhoto('before', 'mittaristo')">
 
                             </label>
 
                         </div>
 
 
-                        <!-- VASEN -->
+                        <!-- Vasen -->
 
                         <div class="photo-row">
 
@@ -586,26 +552,21 @@
 
                             <label class="photo-button">
 
-                                <span>
-                                    📷
-                                </span>
-
+                                <span>📷</span>
                                 Lisää
 
-                                <input
-                                    type="file"
-                                    id="before-vasen"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onchange="addPhoto('before', 'vasen')"
-                                >
+                                <input type="file"
+                                       id="before-vasen"
+                                       accept="image/*"
+                                       capture="environment"
+                                       onchange="addPhoto('before', 'vasen')">
 
                             </label>
 
                         </div>
 
 
-                        <!-- OIKEA -->
+                        <!-- Oikea -->
 
                         <div class="photo-row">
 
@@ -627,26 +588,21 @@
 
                             <label class="photo-button">
 
-                                <span>
-                                    📷
-                                </span>
-
+                                <span>📷</span>
                                 Lisää
 
-                                <input
-                                    type="file"
-                                    id="before-oikea"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onchange="addPhoto('before', 'oikea')"
-                                >
+                                <input type="file"
+                                       id="before-oikea"
+                                       accept="image/*"
+                                       capture="environment"
+                                       onchange="addPhoto('before', 'oikea')">
 
                             </label>
 
                         </div>
 
 
-                        <!-- EDESTÄ -->
+                        <!-- Edestä -->
 
                         <div class="photo-row">
 
@@ -668,26 +624,21 @@
 
                             <label class="photo-button">
 
-                                <span>
-                                    📷
-                                </span>
-
+                                <span>📷</span>
                                 Lisää
 
-                                <input
-                                    type="file"
-                                    id="before-edesta"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onchange="addPhoto('before', 'edesta')"
-                                >
+                                <input type="file"
+                                       id="before-edesta"
+                                       accept="image/*"
+                                       capture="environment"
+                                       onchange="addPhoto('before', 'edesta')">
 
                             </label>
 
                         </div>
 
 
-                        <!-- TAKAA -->
+                        <!-- Takaa -->
 
                         <div class="photo-row">
 
@@ -709,19 +660,14 @@
 
                             <label class="photo-button">
 
-                                <span>
-                                    📷
-                                </span>
-
+                                <span>📷</span>
                                 Lisää
 
-                                <input
-                                    type="file"
-                                    id="before-takaa"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onchange="addPhoto('before', 'takaa')"
-                                >
+                                <input type="file"
+                                       id="before-takaa"
+                                       accept="image/*"
+                                       capture="environment"
+                                       onchange="addPhoto('before', 'takaa')">
 
                             </label>
 
@@ -730,33 +676,25 @@
                     </div>
 
 
-                    <div
-                        id="beforePreview"
-                        class="photo-preview"
-                    ></div>
+                    <div id="beforePreview"
+                         class="photo-preview"></div>
 
                 </div>
 
 
-                <!-- =================================
+                <!-- =================================================
                      SUBMIT
-                ================================== -->
+                ================================================== -->
 
-                <button
-                    type="submit"
-                    class="submit-btn"
-                >
-
-                    <span>
-                        🚗
-                    </span>
+                <button type="submit"
+                        class="submit-btn">
+                    <span>🚗</span>
 
                     Lisää siirto
 
                     <span class="submit-arrow">
                         →
                     </span>
-
                 </button>
 
             </form>
@@ -766,17 +704,14 @@
     </div>
 
 
-    <!-- =====================================================
-         LOPETA SIIRTO
-    ====================================================== -->
+    <!-- =========================================================
+         FINISH TRANSFER MODAL
+    ========================================================== -->
 
-    <div
-        id="finishModal"
-        class="modal"
-    >
+    <div id="finishModal"
+         class="modal">
 
         <div class="modal-content">
-
 
             <div class="modal-header">
 
@@ -792,18 +727,17 @@
 
                 </div>
 
-                <button
-                    class="close-btn"
-                    onclick="closeFinishModal()"
-                    type="button"
-                >
+                <button type="button"
+                        class="close-btn"
+                        onclick="closeFinishModal()"
+                        aria-label="Sulje">
                     ×
                 </button>
 
             </div>
 
 
-            <!-- AUTO INFO -->
+            <!-- Ajoneuvon tiedot -->
 
             <div class="finish-info">
 
@@ -826,10 +760,11 @@
             </div>
 
 
-            <!-- KUVAT -->
+            <!-- =================================================
+                 AFTER PHOTOS
+            ================================================== -->
 
             <div class="form-section photo-section finish-photos">
-
 
                 <div class="photo-section-title">
 
@@ -853,11 +788,8 @@
 
                     </div>
 
-
-                    <span
-                        id="afterPhotoCount"
-                        class="photo-count"
-                    >
+                    <span id="afterPhotoCount"
+                          class="photo-count">
                         0 / 5
                     </span>
 
@@ -866,8 +798,7 @@
 
                 <div class="photo-list">
 
-
-                    <!-- MITTARISTO -->
+                    <!-- Mittaristo -->
 
                     <div class="photo-row">
 
@@ -889,26 +820,21 @@
 
                         <label class="photo-button">
 
-                            <span>
-                                📷
-                            </span>
-
+                            <span>📷</span>
                             Lisää
 
-                            <input
-                                type="file"
-                                id="after-mittaristo"
-                                accept="image/*"
-                                capture="environment"
-                                onchange="addPhoto('after', 'mittaristo')"
-                            >
+                            <input type="file"
+                                   id="after-mittaristo"
+                                   accept="image/*"
+                                   capture="environment"
+                                   onchange="addPhoto('after', 'mittaristo')">
 
                         </label>
 
                     </div>
 
 
-                    <!-- VASEN -->
+                    <!-- Vasen -->
 
                     <div class="photo-row">
 
@@ -930,26 +856,21 @@
 
                         <label class="photo-button">
 
-                            <span>
-                                📷
-                            </span>
-
+                            <span>📷</span>
                             Lisää
 
-                            <input
-                                type="file"
-                                id="after-vasen"
-                                accept="image/*"
-                                capture="environment"
-                                onchange="addPhoto('after', 'vasen')"
-                            >
+                            <input type="file"
+                                   id="after-vasen"
+                                   accept="image/*"
+                                   capture="environment"
+                                   onchange="addPhoto('after', 'vasen')">
 
                         </label>
 
                     </div>
 
 
-                    <!-- OIKEA -->
+                    <!-- Oikea -->
 
                     <div class="photo-row">
 
@@ -971,26 +892,21 @@
 
                         <label class="photo-button">
 
-                            <span>
-                                📷
-                            </span>
-
+                            <span>📷</span>
                             Lisää
 
-                            <input
-                                type="file"
-                                id="after-oikea"
-                                accept="image/*"
-                                capture="environment"
-                                onchange="addPhoto('after', 'oikea')"
-                            >
+                            <input type="file"
+                                   id="after-oikea"
+                                   accept="image/*"
+                                   capture="environment"
+                                   onchange="addPhoto('after', 'oikea')">
 
                         </label>
 
                     </div>
 
 
-                    <!-- EDESTÄ -->
+                    <!-- Edestä -->
 
                     <div class="photo-row">
 
@@ -1012,26 +928,21 @@
 
                         <label class="photo-button">
 
-                            <span>
-                                📷
-                            </span>
-
+                            <span>📷</span>
                             Lisää
 
-                            <input
-                                type="file"
-                                id="after-edesta"
-                                accept="image/*"
-                                capture="environment"
-                                onchange="addPhoto('after', 'edesta')"
-                            >
+                            <input type="file"
+                                   id="after-edesta"
+                                   accept="image/*"
+                                   capture="environment"
+                                   onchange="addPhoto('after', 'edesta')">
 
                         </label>
 
                     </div>
 
 
-                    <!-- TAKAA -->
+                    <!-- Takaa -->
 
                     <div class="photo-row">
 
@@ -1053,19 +964,14 @@
 
                         <label class="photo-button">
 
-                            <span>
-                                📷
-                            </span>
-
+                            <span>📷</span>
                             Lisää
 
-                            <input
-                                type="file"
-                                id="after-takaa"
-                                accept="image/*"
-                                capture="environment"
-                                onchange="addPhoto('after', 'takaa')"
-                            >
+                            <input type="file"
+                                   id="after-takaa"
+                                   accept="image/*"
+                                   capture="environment"
+                                   onchange="addPhoto('after', 'takaa')">
 
                         </label>
 
@@ -1074,33 +980,25 @@
                 </div>
 
 
-                <div
-                    id="afterPreview"
-                    class="photo-preview"
-                ></div>
+                <div id="afterPreview"
+                     class="photo-preview"></div>
 
             </div>
 
 
-            <!-- LOPETA -->
+            <!-- Lopeta -->
 
-            <button
-                id="finishTransferBtn"
-                class="submit-btn finish-btn"
-                onclick="finishTransfer()"
-                type="button"
-            >
-
-                <span>
-                    ✅
-                </span>
+            <button type="button"
+                    id="finishTransferBtn"
+                    class="submit-btn finish-btn"
+                    onclick="finishTransfer()">
+                <span>✅</span>
 
                 Lopeta siirto
 
                 <span class="submit-arrow">
                     →
                 </span>
-
             </button>
 
         </div>
@@ -1108,14 +1006,12 @@
     </div>
 
 
-    <!-- =====================================================
-         TIEDOT
-    ====================================================== -->
+    <!-- =========================================================
+         DETAILS MODAL
+    ========================================================== -->
 
-    <div
-        id="detailsModal"
-        class="modal"
-    >
+    <div id="detailsModal"
+         class="modal">
 
         <div class="modal-content">
 
@@ -1133,11 +1029,10 @@
 
                 </div>
 
-                <button
-                    onclick="closeDetails()"
-                    class="close-btn"
-                    type="button"
-                >
+                <button type="button"
+                        class="close-btn"
+                        onclick="closeDetails()"
+                        aria-label="Sulje">
                     ×
                 </button>
 
@@ -1151,9 +1046,9 @@
     </div>
 
 
-    <!-- =========================================
+    <!-- =========================================================
          JAVASCRIPT
-    ========================================== -->
+    ========================================================== -->
 
     <script src="app.js"></script>
 
