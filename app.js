@@ -52,7 +52,6 @@ function normalizePhotos(photos) {
         return result;
     }
 
-
     photoTypes.forEach(type => {
 
         if (Array.isArray(photos[type])) {
@@ -365,6 +364,17 @@ function addPhoto(
         input.files[0];
 
 
+    // Varmistetaan, että kyseessä on kuva
+    if (!file.type.startsWith("image/")) {
+
+        alert("Valitse kuvatiedosto.");
+
+        input.value = "";
+
+        return;
+    }
+
+
     const reader =
         new FileReader();
 
@@ -498,6 +508,8 @@ function renderPhotoPreview(
             list.forEach(
                 photo => {
 
+                    // TÄRKEÄ KORJAUS:
+                    // CSS käyttää photo-preview-item
                     const item =
                         document.createElement(
                             "div"
@@ -505,7 +517,7 @@ function renderPhotoPreview(
 
 
                     item.className =
-                        "preview-item";
+                        "photo-preview-item";
 
 
                     const img =
@@ -516,6 +528,17 @@ function renderPhotoPreview(
 
                     img.src =
                         photo;
+
+
+                    img.alt =
+                        photoNames[type];
+
+
+                    // Estetään kuvan luonnollinen koko
+                    img.style.width = "100%";
+                    img.style.height = "100%";
+                    img.style.objectFit = "cover";
+                    img.style.display = "block";
 
 
                     const label =
@@ -621,16 +644,19 @@ function updateAfterPhotoCount() {
         button.disabled =
             false;
 
-        button.textContent =
-            "✅ Lopeta siirto";
+        button.innerHTML =
+            `<span>✅</span>
+             Lopeta siirto
+             <span class="submit-arrow">→</span>`;
 
     } else {
 
         button.disabled =
             true;
 
-        button.textContent =
-            `📸 Lisää kaikki kuvat (${count}/5)`;
+        button.innerHTML =
+            `<span>📸</span>
+             Lisää kaikki kuvat (${count}/5)`;
     }
 }
 
@@ -952,8 +978,7 @@ function createTransferCard(
                     ${statusNames[
         transfer.status
         ] ||
-        "Suunniteltu"
-        }
+        "Suunniteltu"}
 
                 </span>
 
@@ -1022,13 +1047,13 @@ function createTransferCard(
                 ${transfer.vehicle
             ?
             `
-                    <span>
-                        🚗
-                        ${escapeHtml(
+                            <span>
+                                🚗
+                                ${escapeHtml(
                 transfer.vehicle
             )}
-                    </span>
-                    `
+                            </span>
+                        `
             :
             ""
         }
@@ -1064,22 +1089,21 @@ function createTransferCard(
                 </button>
 
 
-                ${transfer.status ===
-            "planned"
+                ${transfer.status === "planned"
 
             ?
 
             `
-                    <button
-                        class="action-btn"
-                        onclick="changeStatus(
-                            ${transfer.id},
-                            'driving'
-                        )"
-                    >
-                        🚗 Aloita ajo
-                    </button>
-                    `
+                            <button
+                                class="action-btn"
+                                onclick="changeStatus(
+                                    ${transfer.id},
+                                    'driving'
+                                )"
+                            >
+                                🚗 Aloita ajo
+                            </button>
+                        `
 
             :
 
@@ -1087,21 +1111,20 @@ function createTransferCard(
         }
 
 
-                ${transfer.status ===
-            "driving"
+                ${transfer.status === "driving"
 
             ?
 
             `
-                    <button
-                        class="action-btn finish-action"
-                        onclick="openFinishModal(
-                            ${transfer.id}
-                        )"
-                    >
-                        🏁 Lopeta siirto
-                    </button>
-                    `
+                            <button
+                                class="action-btn finish-action"
+                                onclick="openFinishModal(
+                                    ${transfer.id}
+                                )"
+                            >
+                                🏁 Lopeta siirto
+                            </button>
+                        `
 
             :
 
@@ -1801,6 +1824,36 @@ function escapeHtml(text) {
             "'",
             "&#039;"
         );
+}
+
+
+// ============================
+// GOOGLE MAPS
+// ============================
+
+function openGoogleMaps() {
+
+    const destination =
+        document
+            .getElementById("to")
+            .value
+            .trim();
+
+
+    const query =
+        destination
+            ? destination
+            : "";
+
+
+    const url =
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+
+    window.open(
+        url,
+        "_blank"
+    );
 }
 
 
