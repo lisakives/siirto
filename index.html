@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fi">
 
 <head>
@@ -12,221 +12,508 @@
 
 <body>
 
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
     <header class="topbar">
 
         <div class="logo">
-            🚗 <span>SiirtoApp</span>
+            <div class="logo-icon">🚗</div>
+
+            <div class="logo-text">
+                <strong>SiirtoApp</strong>
+                <span>Siirtoajojen hallinta</span>
+            </div>
         </div>
 
-        <button class="add-btn" onclick="openForm()">
-            + Uusi siirto
+        <button
+            class="add-btn"
+            onclick="openForm()"
+            type="button"
+        >
+            <span>＋</span>
+            <span>Uusi siirto</span>
         </button>
 
     </header>
 
 
+    <!-- =========================================
+         MAIN
+    ========================================== -->
+
     <main class="container">
 
-        <!-- DASHBOARD -->
+
+        <!-- =====================================
+             WELCOME
+        ====================================== -->
+
+        <section class="welcome">
+
+            <div>
+
+                <span class="welcome-label">
+                    SIIRTOAJOT
+                </span>
+
+                <h1>
+                    Hallitse siirtojasi
+                    <span>helposti.</span>
+                </h1>
+
+                <p>
+                    Lisää ajot, seuraa matkoja ja merkitse
+                    siirrot valmiiksi yhdestä paikasta.
+                </p>
+
+            </div>
+
+            <div class="welcome-decoration">
+                🚗
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             DASHBOARD
+        ====================================== -->
 
         <section class="dashboard">
 
-            <div class="stat-card">
-                <span class="stat-icon">📋</span>
 
-                <div>
-                    <small>Kaikki</small>
-                    <strong id="totalCount">0</strong>
+            <!-- KAIKKI -->
+
+            <div class="stat-card">
+
+                <div class="stat-icon blue">
+                    📋
                 </div>
+
+                <div class="stat-content">
+
+                    <small>
+                        Kaikki siirrot
+                    </small>
+
+                    <strong id="totalCount">
+                        0
+                    </strong>
+
+                </div>
+
             </div>
 
 
-            <div class="stat-card">
-                <span class="stat-icon">📅</span>
+            <!-- TÄNÄÄN -->
 
-                <div>
-                    <small>Tänään</small>
-                    <strong id="todayCount">0</strong>
+            <div class="stat-card">
+
+                <div class="stat-icon purple">
+                    📅
                 </div>
+
+                <div class="stat-content">
+
+                    <small>
+                        Tänään
+                    </small>
+
+                    <strong id="todayCount">
+                        0
+                    </strong>
+
+                </div>
+
             </div>
 
 
-            <div class="stat-card">
-                <span class="stat-icon">🚗</span>
+            <!-- MATKALLA -->
 
-                <div>
-                    <small>Matkalla</small>
-                    <strong id="activeCount">0</strong>
+            <div class="stat-card">
+
+                <div class="stat-icon orange">
+                    🚗
                 </div>
+
+                <div class="stat-content">
+
+                    <small>
+                        Matkalla
+                    </small>
+
+                    <strong id="activeCount">
+                        0
+                    </strong>
+
+                </div>
+
             </div>
 
 
-            <div class="stat-card">
-                <span class="stat-icon">✅</span>
+            <!-- VALMIIT -->
 
-                <div>
-                    <small>Valmiit</small>
-                    <strong id="completedCount">0</strong>
+            <div class="stat-card">
+
+                <div class="stat-icon green">
+                    ✓
                 </div>
+
+                <div class="stat-content">
+
+                    <small>
+                        Valmiit
+                    </small>
+
+                    <strong id="completedCount">
+                        0
+                    </strong>
+
+                </div>
+
             </div>
 
         </section>
 
 
-        <!-- SEARCH -->
+        <!-- =====================================
+             SEARCH / FILTER
+        ====================================== -->
 
         <section class="toolbar">
 
-            <input type="text"
-                   id="searchInput"
-                   placeholder="🔍 Hae siirtoja..."
-                   oninput="renderTransfers()">
+            <div class="search-box">
 
-            <select id="filterStatus"
-                    onchange="renderTransfers()">
-                <option value="all">Kaikki</option>
-                <option value="planned">Suunnitellut</option>
-                <option value="driving">Matkalla</option>
-                <option value="completed">Valmiit</option>
-            </select>
+                <span class="search-icon">
+                    🔍
+                </span>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Hae asiakasta, autoa tai kohdetta..."
+                    oninput="renderTransfers()"
+                >
+
+            </div>
+
+
+            <div class="filter-box">
+
+                <span>
+                    Suodatus
+                </span>
+
+                <select
+                    id="filterStatus"
+                    onchange="renderTransfers()"
+                >
+
+                    <option value="all">
+                        Kaikki siirrot
+                    </option>
+
+                    <option value="planned">
+                        Suunnitellut
+                    </option>
+
+                    <option value="driving">
+                        Matkalla
+                    </option>
+
+                    <option value="completed">
+                        Valmiit
+                    </option>
+
+                </select>
+
+            </div>
 
         </section>
 
 
-        <!-- SIIRROT -->
+        <!-- =====================================
+             SIIRROT
+        ====================================== -->
 
-        <section id="transferList"></section>
+        <section class="transfer-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Siirtoajot
+                    </h2>
+
+                    <p>
+                        Kaikki tulevat ja tehdyt siirrot
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div id="transferList"></div>
+
+        </section>
 
     </main>
 
 
-    <!-- =========================
-         UUSI SIIRTO
-    ========================== -->
+    <!-- =====================================================
+         UUSI SIIRTO - MODAL
+    ====================================================== -->
 
-    <div id="formModal" class="modal">
+    <div
+        id="formModal"
+        class="modal"
+    >
 
         <div class="modal-content">
 
+
+            <!-- HEADER -->
+
             <div class="modal-header">
 
-                <h2>🚗 Uusi siirtoajo</h2>
+                <div>
 
-                <button class="close-btn"
-                        onclick="closeForm()">
+                    <span class="modal-eyebrow">
+                        UUSI AJO
+                    </span>
+
+                    <h2>
+                        🚗 Lisää siirtoajo
+                    </h2>
+
+                </div>
+
+                <button
+                    class="close-btn"
+                    onclick="closeForm()"
+                    type="button"
+                >
                     ×
                 </button>
 
             </div>
 
 
+            <!-- FORM -->
+
             <form id="transferForm">
 
-                <div class="form-grid">
 
-                    <div class="form-group">
+                <!-- =================================
+                     PERUSTIEDOT
+                ================================== -->
 
-                        <label>Asiakas</label>
+                <div class="form-section">
 
-                        <input type="text"
-                               id="customer"
-                               placeholder="Esim. Bilar99e"
-                               required>
+                    <div class="form-section-title">
 
-                    </div>
+                        <div class="form-section-icon">
+                            📋
+                        </div>
 
+                        <div>
 
-                    <div class="form-group">
+                            <strong>
+                                Ajotiedot
+                            </strong>
 
-                        <label>Päivämäärä</label>
+                            <span>
+                                Syötä siirron perustiedot
+                            </span>
 
-                        <input type="date"
-                               id="date"
-                               required>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label>Lähtöaika</label>
-
-                        <input type="time"
-                               id="time"
-                               required>
+                        </div>
 
                     </div>
 
 
-                    <div class="form-group">
-
-                        <label>Ajoneuvo</label>
-
-                        <input type="text"
-                               id="vehicle"
-                               placeholder="Esim. VW Transporter">
-
-                    </div>
+                    <div class="form-grid">
 
 
-                    <div class="form-group full">
+                        <!-- ASIAKAS -->
 
-                        <label>Lähtöpaikka</label>
+                        <div class="form-group">
 
-                        <input type="text"
-                               id="from"
-                               placeholder="Esim. Tuusula"
-                               required>
+                            <label for="customer">
+                                Asiakas
+                            </label>
 
-                    </div>
+                            <input
+                                type="text"
+                                id="customer"
+                                placeholder="Esim. Bilar99e"
+                                required
+                            >
 
-
-                    <div class="form-group full">
-
-                        <label>Kohde</label>
-
-                        <input type="text"
-                               id="to"
-                               placeholder="Esim. Tampere"
-                               required>
-
-                    </div>
+                        </div>
 
 
-                    <div class="form-group full">
+                        <!-- PÄIVÄ -->
 
-                        <label>Lisätiedot</label>
+                        <div class="form-group">
 
-                        <textarea id="notes"
-                                  placeholder="Esim. avaimet toimistolla..."></textarea>
+                            <label for="date">
+                                Päivämäärä
+                            </label>
+
+                            <input
+                                type="date"
+                                id="date"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- AIKA -->
+
+                        <div class="form-group">
+
+                            <label for="time">
+                                Lähtöaika
+                            </label>
+
+                            <input
+                                type="time"
+                                id="time"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- AUTO -->
+
+                        <div class="form-group">
+
+                            <label for="vehicle">
+                                Ajoneuvo
+                            </label>
+
+                            <input
+                                type="text"
+                                id="vehicle"
+                                placeholder="Esim. VW Transporter"
+                            >
+
+                        </div>
+
+
+                        <!-- LÄHTÖ -->
+
+                        <div class="form-group full">
+
+                            <label for="from">
+                                Lähtöpaikka
+                            </label>
+
+                            <div class="input-with-icon">
+
+                                <span>
+                                    📍
+                                </span>
+
+                                <input
+                                    type="text"
+                                    id="from"
+                                    placeholder="Esim. Tuusula"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- KOHDE -->
+
+                        <div class="form-group full">
+
+                            <label for="to">
+                                Kohde
+                            </label>
+
+                            <div class="input-with-icon">
+
+                                <span>
+                                    🏁
+                                </span>
+
+                                <input
+                                    type="text"
+                                    id="to"
+                                    placeholder="Esim. Tampere"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- LISÄTIEDOT -->
+
+                        <div class="form-group full">
+
+                            <label for="notes">
+                                Lisätiedot
+                            </label>
+
+                            <textarea
+                                id="notes"
+                                placeholder="Esim. avaimet toimistolla..."
+                            ></textarea>
+
+                        </div>
 
                     </div>
 
                 </div>
 
 
-                <!-- =========================
-                     KUVAT ENNEN LÄHTÖÄ
-                ========================== -->
+                <!-- =================================
+                     KUVAT
+                ================================== -->
 
-                <div class="photo-section">
+                <div class="form-section photo-section">
+
 
                     <div class="photo-section-title">
 
-                        <div>
+                        <div class="photo-heading">
 
-                            <h3>
-                                📸 Kuvat ennen lähtöä
-                            </h3>
+                            <div class="form-section-icon camera">
+                                📸
+                            </div>
 
-                            <p>
-                                Ota kuvat autosta ennen ajoa.
-                            </p>
+                            <div>
+
+                                <h3>
+                                    Kuvat ennen lähtöä
+                                </h3>
+
+                                <p>
+                                    Vapaaehtoiset – voit lisätä kuvat
+                                    nyt tai myöhemmin.
+                                </p>
+
+                            </div>
 
                         </div>
 
-                        <span id="beforePhotoCount"
-                              class="photo-count">
+
+                        <span
+                            id="beforePhotoCount"
+                            class="photo-count"
+                        >
                             0 / 5
                         </span>
 
@@ -258,13 +545,19 @@
 
                             <label class="photo-button">
 
-                                Lisää kuva
+                                <span>
+                                    📷
+                                </span>
 
-                                <input type="file"
-                                       id="before-mittaristo"
-                                       accept="image/*"
-                                       capture="environment"
-                                       onchange="addPhoto('before', 'mittaristo')">
+                                Lisää
+
+                                <input
+                                    type="file"
+                                    id="before-mittaristo"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onchange="addPhoto('before', 'mittaristo')"
+                                >
 
                             </label>
 
@@ -293,13 +586,19 @@
 
                             <label class="photo-button">
 
-                                Lisää kuva
+                                <span>
+                                    📷
+                                </span>
 
-                                <input type="file"
-                                       id="before-vasen"
-                                       accept="image/*"
-                                       capture="environment"
-                                       onchange="addPhoto('before', 'vasen')">
+                                Lisää
+
+                                <input
+                                    type="file"
+                                    id="before-vasen"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onchange="addPhoto('before', 'vasen')"
+                                >
 
                             </label>
 
@@ -328,13 +627,19 @@
 
                             <label class="photo-button">
 
-                                Lisää kuva
+                                <span>
+                                    📷
+                                </span>
 
-                                <input type="file"
-                                       id="before-oikea"
-                                       accept="image/*"
-                                       capture="environment"
-                                       onchange="addPhoto('before', 'oikea')">
+                                Lisää
+
+                                <input
+                                    type="file"
+                                    id="before-oikea"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onchange="addPhoto('before', 'oikea')"
+                                >
 
                             </label>
 
@@ -363,13 +668,19 @@
 
                             <label class="photo-button">
 
-                                Lisää kuva
+                                <span>
+                                    📷
+                                </span>
 
-                                <input type="file"
-                                       id="before-edesta"
-                                       accept="image/*"
-                                       capture="environment"
-                                       onchange="addPhoto('before', 'edesta')">
+                                Lisää
+
+                                <input
+                                    type="file"
+                                    id="before-edesta"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onchange="addPhoto('before', 'edesta')"
+                                >
 
                             </label>
 
@@ -398,13 +709,19 @@
 
                             <label class="photo-button">
 
-                                Lisää kuva
+                                <span>
+                                    📷
+                                </span>
 
-                                <input type="file"
-                                       id="before-takaa"
-                                       accept="image/*"
-                                       capture="environment"
-                                       onchange="addPhoto('before', 'takaa')">
+                                Lisää
+
+                                <input
+                                    type="file"
+                                    id="before-takaa"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onchange="addPhoto('before', 'takaa')"
+                                >
 
                             </label>
 
@@ -413,15 +730,33 @@
                     </div>
 
 
-                    <div id="beforePreview"
-                         class="photo-preview"></div>
+                    <div
+                        id="beforePreview"
+                        class="photo-preview"
+                    ></div>
 
                 </div>
 
 
-                <button type="submit"
-                        class="submit-btn">
-                    🚗 Lisää siirto
+                <!-- =================================
+                     SUBMIT
+                ================================== -->
+
+                <button
+                    type="submit"
+                    class="submit-btn"
+                >
+
+                    <span>
+                        🚗
+                    </span>
+
+                    Lisää siirto
+
+                    <span class="submit-arrow">
+                        →
+                    </span>
+
                 </button>
 
             </form>
@@ -431,59 +766,98 @@
     </div>
 
 
-    <!-- =========================
+    <!-- =====================================================
          LOPETA SIIRTO
-    ========================== -->
+    ====================================================== -->
 
-    <div id="finishModal" class="modal">
+    <div
+        id="finishModal"
+        class="modal"
+    >
 
         <div class="modal-content">
 
+
             <div class="modal-header">
 
-                <h2>
-                    🏁 Lopeta siirto
-                </h2>
+                <div>
 
-                <button class="close-btn"
-                        onclick="closeFinishModal()">
+                    <span class="modal-eyebrow">
+                        AJON PÄÄTTÄMINEN
+                    </span>
+
+                    <h2>
+                        🏁 Lopeta siirto
+                    </h2>
+
+                </div>
+
+                <button
+                    class="close-btn"
+                    onclick="closeFinishModal()"
+                    type="button"
+                >
                     ×
                 </button>
 
             </div>
 
 
+            <!-- AUTO INFO -->
+
             <div class="finish-info">
 
-                <strong id="finishVehicle">
-                    Ajoneuvo
-                </strong>
+                <div class="finish-car-icon">
+                    🚗
+                </div>
 
-                <span id="finishRoute">
-                    Lähtö → Kohde
-                </span>
+                <div>
+
+                    <strong id="finishVehicle">
+                        Ajoneuvo
+                    </strong>
+
+                    <span id="finishRoute">
+                        Lähtö → Kohde
+                    </span>
+
+                </div>
 
             </div>
 
 
-            <div class="photo-section finish-photos">
+            <!-- KUVAT -->
+
+            <div class="form-section photo-section finish-photos">
+
 
                 <div class="photo-section-title">
 
-                    <div>
+                    <div class="photo-heading">
 
-                        <h3>
-                            📸 Kuvat kohteessa
-                        </h3>
+                        <div class="form-section-icon camera">
+                            📸
+                        </div>
 
-                        <p>
-                            Ota kuvat autosta toimituksen jälkeen.
-                        </p>
+                        <div>
+
+                            <h3>
+                                Kuvat kohteessa
+                            </h3>
+
+                            <p>
+                                Kuvat ovat vapaaehtoisia.
+                            </p>
+
+                        </div>
 
                     </div>
 
-                    <span id="afterPhotoCount"
-                          class="photo-count">
+
+                    <span
+                        id="afterPhotoCount"
+                        class="photo-count"
+                    >
                         0 / 5
                     </span>
 
@@ -515,13 +889,19 @@
 
                         <label class="photo-button">
 
-                            Lisää kuva
+                            <span>
+                                📷
+                            </span>
 
-                            <input type="file"
-                                   id="after-mittaristo"
-                                   accept="image/*"
-                                   capture="environment"
-                                   onchange="addPhoto('after', 'mittaristo')">
+                            Lisää
+
+                            <input
+                                type="file"
+                                id="after-mittaristo"
+                                accept="image/*"
+                                capture="environment"
+                                onchange="addPhoto('after', 'mittaristo')"
+                            >
 
                         </label>
 
@@ -550,13 +930,19 @@
 
                         <label class="photo-button">
 
-                            Lisää kuva
+                            <span>
+                                📷
+                            </span>
 
-                            <input type="file"
-                                   id="after-vasen"
-                                   accept="image/*"
-                                   capture="environment"
-                                   onchange="addPhoto('after', 'vasen')">
+                            Lisää
+
+                            <input
+                                type="file"
+                                id="after-vasen"
+                                accept="image/*"
+                                capture="environment"
+                                onchange="addPhoto('after', 'vasen')"
+                            >
 
                         </label>
 
@@ -585,13 +971,19 @@
 
                         <label class="photo-button">
 
-                            Lisää kuva
+                            <span>
+                                📷
+                            </span>
 
-                            <input type="file"
-                                   id="after-oikea"
-                                   accept="image/*"
-                                   capture="environment"
-                                   onchange="addPhoto('after', 'oikea')">
+                            Lisää
+
+                            <input
+                                type="file"
+                                id="after-oikea"
+                                accept="image/*"
+                                capture="environment"
+                                onchange="addPhoto('after', 'oikea')"
+                            >
 
                         </label>
 
@@ -620,13 +1012,19 @@
 
                         <label class="photo-button">
 
-                            Lisää kuva
+                            <span>
+                                📷
+                            </span>
 
-                            <input type="file"
-                                   id="after-edesta"
-                                   accept="image/*"
-                                   capture="environment"
-                                   onchange="addPhoto('after', 'edesta')">
+                            Lisää
+
+                            <input
+                                type="file"
+                                id="after-edesta"
+                                accept="image/*"
+                                capture="environment"
+                                onchange="addPhoto('after', 'edesta')"
+                            >
 
                         </label>
 
@@ -655,13 +1053,19 @@
 
                         <label class="photo-button">
 
-                            Lisää kuva
+                            <span>
+                                📷
+                            </span>
 
-                            <input type="file"
-                                   id="after-takaa"
-                                   accept="image/*"
-                                   capture="environment"
-                                   onchange="addPhoto('after', 'takaa')">
+                            Lisää
+
+                            <input
+                                type="file"
+                                id="after-takaa"
+                                accept="image/*"
+                                capture="environment"
+                                onchange="addPhoto('after', 'takaa')"
+                            >
 
                         </label>
 
@@ -670,17 +1074,33 @@
                 </div>
 
 
-                <div id="afterPreview"
-                     class="photo-preview"></div>
+                <div
+                    id="afterPreview"
+                    class="photo-preview"
+                ></div>
 
             </div>
 
 
-            <button id="finishTransferBtn"
-                    class="submit-btn finish-btn"
-                    onclick="finishTransfer()"
-                    disabled>
-                📸 Lisää kaikki kuvat
+            <!-- LOPETA -->
+
+            <button
+                id="finishTransferBtn"
+                class="submit-btn finish-btn"
+                onclick="finishTransfer()"
+                type="button"
+            >
+
+                <span>
+                    ✅
+                </span>
+
+                Lopeta siirto
+
+                <span class="submit-arrow">
+                    →
+                </span>
+
             </button>
 
         </div>
@@ -688,26 +1108,41 @@
     </div>
 
 
-    <!-- =========================
+    <!-- =====================================================
          TIEDOT
-    ========================== -->
+    ====================================================== -->
 
-    <div id="detailsModal" class="modal">
+    <div
+        id="detailsModal"
+        class="modal"
+    >
 
         <div class="modal-content">
 
             <div class="modal-header">
 
-                <h2 id="detailsTitle">
-                    Siirto
-                </h2>
+                <div>
 
-                <button onclick="closeDetails()"
-                        class="close-btn">
+                    <span class="modal-eyebrow">
+                        SIIRRON TIEDOT
+                    </span>
+
+                    <h2 id="detailsTitle">
+                        Siirto
+                    </h2>
+
+                </div>
+
+                <button
+                    onclick="closeDetails()"
+                    class="close-btn"
+                    type="button"
+                >
                     ×
                 </button>
 
             </div>
+
 
             <div id="detailsContent"></div>
 
@@ -715,6 +1150,10 @@
 
     </div>
 
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================== -->
 
     <script src="app.js"></script>
 
