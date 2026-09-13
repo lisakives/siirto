@@ -1,2403 +1,3222 @@
-let transfers = [];
-
-let beforePhotoData = createEmptyPhotos();
-let afterPhotoData = createEmptyPhotos();
-
-let finishingTransferId = null;
+/* =========================================================
+   SIIRTOAPP — DARK PREMIUM THEME
+   ========================================================= */
 
 
-// ======================================================
-// ASETUKSET
-// ======================================================
+/* =========================================================
+   RESET
+   ========================================================= */
 
-const STORAGE_KEY = "siirtoAppTransfers";
-
-const PHOTO_TYPES = [
-    "mittaristo",
-    "vasen",
-    "oikea",
-    "edesta",
-    "takaa"
-];
-
-const PHOTO_NAMES = {
-    mittaristo: "Mittaristo",
-    vasen: "Vasen sivu",
-    oikea: "Oikea sivu",
-    edesta: "Edestä",
-    takaa: "Takaa"
-};
-
-
-// Kuvien pakkaus
-const MAX_WIDTH = 1200;
-const MAX_HEIGHT = 1200;
-const IMAGE_QUALITY = 0.72;
-
-
-// ======================================================
-// KUVAT
-// ======================================================
-
-function createEmptyPhotos() {
-    return {
-        mittaristo: null,
-        vasen: null,
-        oikea: null,
-        edesta: null,
-        takaa: null
-    };
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 
-function normalizePhotos(photos) {
+:root {
 
-    const normalized = createEmptyPhotos();
+    --bg: #080b10;
+    --bg-soft: #0d1118;
+    --surface: #11161f;
+    --surface-2: #151b25;
+    --surface-3: #1b222e;
 
-    if (!photos) {
-        return normalized;
-    }
+    --border: rgba(255, 255, 255, 0.08);
+    --border-light: rgba(255, 255, 255, 0.12);
 
-    PHOTO_TYPES.forEach(type => {
+    --text: #f5f7fa;
+    --text-soft: #a8b0bd;
+    --text-muted: #6f7886;
 
-        if (photos[type]) {
-            normalized[type] = photos[type];
-        }
+    --blue: #3b82f6;
+    --blue-light: #60a5fa;
+    --blue-dark: #2563eb;
 
-    });
+    --green: #22c55e;
+    --green-light: #4ade80;
 
-    return normalized;
+    --orange: #f59e0b;
+    --orange-light: #fbbf24;
+
+    --red: #ef4444;
+    --red-light: #f87171;
+
+    --purple: #8b5cf6;
+
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-xl: 28px;
+
+    --shadow:
+        0 20px 50px rgba(0, 0, 0, 0.35);
+
+    --shadow-small:
+        0 8px 25px rgba(0, 0, 0, 0.25);
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
 }
 
 
-function getPhotoCount(photos) {
-
-    if (!photos) {
-        return 0;
-    }
-
-    return PHOTO_TYPES.filter(
-        type => photos[type]
-    ).length;
+html {
+    scroll-behavior: smooth;
 }
 
 
-// ======================================================
-// TALLENNUS
-// ======================================================
+body {
 
-function loadTransfers() {
+    min-height: 100vh;
 
-    try {
+    background:
+        radial-gradient(
+            circle at 10% 0%,
+            rgba(59, 130, 246, 0.10),
+            transparent 30%
+        ),
 
-        const saved = localStorage.getItem(
-            STORAGE_KEY
+        radial-gradient(
+            circle at 90% 20%,
+            rgba(139, 92, 246, 0.06),
+            transparent 25%
+        ),
+
+        var(--bg);
+
+    color: var(--text);
+
+    line-height: 1.5;
+
+    -webkit-font-smoothing: antialiased;
+}
+
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+
+button {
+    cursor: pointer;
+}
+
+
+input,
+textarea,
+select {
+    color: var(--text);
+}
+
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.topbar {
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+    height: 76px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding:
+        0
+        max(22px, calc((100vw - 1180px) / 2));
+
+    background:
+        rgba(8, 11, 16, 0.82);
+
+    border-bottom:
+        1px solid var(--border);
+
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.logo {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.logo-icon {
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--blue),
+            var(--purple)
         );
 
-        if (!saved) {
+    box-shadow:
+        0 8px 25px
+        rgba(59, 130, 246, 0.25);
 
-            transfers = [];
+    font-size: 21px;
+}
 
-        } else {
 
-            const parsed = JSON.parse(saved);
+.logo-text {
 
-            if (Array.isArray(parsed)) {
+    display: flex;
 
-                transfers = parsed.map(transfer => ({
+    flex-direction: column;
 
-                    ...transfer,
+    line-height: 1.1;
+}
 
-                    beforePhotos:
-                        normalizePhotos(
-                            transfer.beforePhotos
-                        ),
 
-                    afterPhotos:
-                        normalizePhotos(
-                            transfer.afterPhotos
-                        )
+.logo-text strong {
 
-                }));
+    font-size: 17px;
 
-            } else {
+    letter-spacing: -0.3px;
+}
 
-                transfers = [];
 
-            }
+.logo-text span {
 
-        }
+    margin-top: 4px;
 
-    } catch (error) {
+    color: var(--text-muted);
 
-        console.error(
-            "Siirtojen lataaminen epäonnistui:",
-            error
+    font-size: 11px;
+
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   ADD BUTTON
+   ========================================================= */
+
+.add-btn {
+
+    border: none;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding:
+        11px
+        17px;
+
+    border-radius: 13px;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--blue),
+            var(--blue-dark)
         );
 
-        transfers = [];
+    box-shadow:
+        0 8px 25px
+        rgba(37, 99, 235, 0.28);
 
-    }
+    font-size: 14px;
 
-    renderTransfers();
-    updateDashboard();
+    font-weight: 700;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
 }
 
 
-function saveTransfers() {
+.add-btn span:first-child {
 
-    try {
+    font-size: 19px;
 
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(transfers)
+    line-height: 1;
+}
+
+
+.add-btn:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 30px
+        rgba(37, 99, 235, 0.38);
+
+    filter: brightness(1.08);
+}
+
+
+.add-btn:active {
+
+    transform: scale(0.97);
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.container {
+
+    width: min(
+        1180px,
+        calc(100% - 40px)
+    );
+
+    margin:
+        0 auto;
+
+    padding:
+        42px
+        0
+        80px;
+}
+
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
+
+.welcome {
+
+    position: relative;
+
+    overflow: hidden;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    min-height: 210px;
+
+    padding:
+        38px
+        42px;
+
+    margin-bottom: 25px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        var(--radius-xl);
+
+    background:
+        linear-gradient(
+            135deg,
+            #111a29,
+            #0e131b
         );
 
-        return true;
+    box-shadow:
+        var(--shadow);
 
-    } catch (error) {
+}
 
-        console.error(
-            "Tallennus epäonnistui:",
-            error
+
+.welcome::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 280px;
+    height: 280px;
+
+    right: -80px;
+    top: -120px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(59, 130, 246, 0.13);
+
+    filter:
+        blur(20px);
+}
+
+
+.welcome::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    right: 140px;
+    bottom: -120px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(139, 92, 246, 0.10);
+
+    filter:
+        blur(20px);
+}
+
+
+.welcome > div:first-child {
+
+    position: relative;
+
+    z-index: 2;
+}
+
+
+.welcome-label {
+
+    display: inline-block;
+
+    margin-bottom: 10px;
+
+    color: var(--blue-light);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
+}
+
+
+.welcome h1 {
+
+    max-width: 650px;
+
+    font-size:
+        clamp(28px, 4vw, 44px);
+
+    line-height: 1.05;
+
+    letter-spacing: -1.5px;
+}
+
+
+.welcome h1 span {
+
+    color: var(--blue-light);
+}
+
+
+.welcome p {
+
+    max-width: 560px;
+
+    margin-top: 15px;
+
+    color: var(--text-soft);
+
+    font-size: 14px;
+}
+
+
+.welcome-decoration {
+
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 130px;
+    height: 130px;
+
+    border-radius: 35px;
+
+    background:
+        rgba(59, 130, 246, 0.09);
+
+    border:
+        1px solid
+        rgba(96, 165, 250, 0.13);
+
+    font-size: 58px;
+
+    transform:
+        rotate(4deg);
+
+    box-shadow:
+        inset 0 0 40px
+        rgba(59, 130, 246, 0.06);
+}
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.dashboard {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 14px;
+
+    margin-bottom: 25px;
+}
+
+
+.stat-card {
+
+    min-height: 118px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 20px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        var(--radius-lg);
+
+    background:
+        linear-gradient(
+            145deg,
+            var(--surface),
+            var(--bg-soft)
         );
 
-        alert(
-            "Siirtoa ei voitu tallentaa.\n\n" +
-            "Selaimen tallennustila saattaa olla täynnä. " +
-            "Kokeile poistaa vanhoja siirtoja."
+    box-shadow:
+        var(--shadow-small);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.stat-card:hover {
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        var(--border-light);
+}
+
+
+.stat-icon {
+
+    width: 50px;
+    height: 50px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    font-size: 22px;
+}
+
+
+.stat-icon.blue {
+
+    background:
+        rgba(59, 130, 246, 0.13);
+
+    color: var(--blue-light);
+}
+
+
+.stat-icon.purple {
+
+    background:
+        rgba(139, 92, 246, 0.13);
+
+    color: #a78bfa;
+}
+
+
+.stat-icon.orange {
+
+    background:
+        rgba(245, 158, 11, 0.13);
+
+    color: var(--orange-light);
+}
+
+
+.stat-icon.green {
+
+    background:
+        rgba(34, 197, 94, 0.13);
+
+    color: var(--green-light);
+}
+
+
+.stat-content {
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.stat-content small {
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.6px;
+}
+
+
+.stat-content strong {
+
+    margin-top: 2px;
+
+    font-size: 29px;
+
+    line-height: 1;
+
+    letter-spacing: -1px;
+}
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.toolbar {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 30px;
+}
+
+
+.search-box {
+
+    position: relative;
+
+    flex: 1;
+}
+
+
+.search-icon {
+
+    position: absolute;
+
+    left: 16px;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    color: var(--text-muted);
+
+    pointer-events: none;
+}
+
+
+.search-box input {
+
+    width: 100%;
+
+    height: 50px;
+
+    padding:
+        0
+        16px
+        0
+        45px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        14px;
+
+    outline: none;
+
+    background:
+        var(--surface);
+
+    color: var(--text);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.search-box input::placeholder {
+
+    color:
+        var(--text-muted);
+}
+
+
+.search-box input:focus {
+
+    border-color:
+        rgba(59, 130, 246, 0.65);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(59, 130, 246, 0.08);
+}
+
+
+.filter-box {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    height: 50px;
+
+    padding:
+        0
+        12px
+        0
+        16px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        14px;
+
+    background:
+        var(--surface);
+}
+
+
+.filter-box span {
+
+    color:
+        var(--text-muted);
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.filter-box select {
+
+    border: none;
+
+    outline: none;
+
+    background:
+        transparent;
+
+    color:
+        var(--text);
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.filter-box option {
+
+    background:
+        var(--surface-2);
+
+    color:
+        var(--text);
+}
+
+
+/* =========================================================
+   SECTION HEADER
+   ========================================================= */
+
+.section-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 15px;
+}
+
+
+.section-header h2 {
+
+    font-size: 20px;
+
+    letter-spacing: -0.5px;
+}
+
+
+.section-header p {
+
+    margin-top: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   TRANSFER LIST
+   ========================================================= */
+
+#transferList {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+
+/* =========================================================
+   TRANSFER CARD
+   ========================================================= */
+
+.transfer-card {
+
+    position: relative;
+
+    overflow: hidden;
+
+    padding: 23px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        var(--radius-lg);
+
+    background:
+        linear-gradient(
+            145deg,
+            var(--surface),
+            #0e131a
         );
 
-        return false;
-    }
+    box-shadow:
+        var(--shadow-small);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 
-// ======================================================
-// UUSI SIIRTO
-// ======================================================
+.transfer-card:hover {
 
-function openForm() {
+    transform:
+        translateY(-2px);
 
-    const modal =
-        document.getElementById("formModal");
+    border-color:
+        var(--border-light);
 
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.add("active");
-
-    resetBeforePhotos();
-
-    setDefaultDateTime();
+    box-shadow:
+        0 20px 50px
+        rgba(0, 0, 0, 0.35);
 }
 
 
-function closeForm() {
+.transfer-card::before {
 
-    const modal =
-        document.getElementById("formModal");
+    content: "";
 
-    if (!modal) {
-        return;
-    }
+    position: absolute;
 
-    modal.classList.remove("active");
+    left: 0;
+    top: 0;
+
+    width: 3px;
+    height: 100%;
+
+    background:
+        var(--blue);
+
+    opacity: 0.7;
 }
 
 
-function setDefaultDateTime() {
+.transfer-card.driving::before {
 
-    const dateInput =
-        document.getElementById("date");
-
-    if (dateInput && !dateInput.value) {
-
-        const now = new Date();
-
-        const year =
-            now.getFullYear();
-
-        const month =
-            String(now.getMonth() + 1)
-                .padStart(2, "0");
-
-        const day =
-            String(now.getDate())
-                .padStart(2, "0");
-
-        dateInput.value =
-            `${year}-${month}-${day}`;
-    }
+    background:
+        var(--orange);
 }
 
 
-function resetBeforePhotos() {
+.transfer-card.completed::before {
 
-    beforePhotoData =
-        createEmptyPhotos();
+    background:
+        var(--green);
+}
 
-    PHOTO_TYPES.forEach(type => {
 
-        const input =
-            document.getElementById(
-                `before-${type}`
+/* =========================================================
+   CARD TOP
+   ========================================================= */
+
+.transfer-card-top {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+}
+
+
+.transfer-main-info h3 {
+
+    margin-top: 7px;
+
+    font-size: 19px;
+
+    letter-spacing: -0.4px;
+}
+
+
+.transfer-status-row {
+
+    display: flex;
+}
+
+
+.status {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding:
+        5px
+        9px;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.5px;
+}
+
+
+.status-dot {
+
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background:
+        currentColor;
+}
+
+
+.status.pending {
+
+    color:
+        var(--blue-light);
+
+    background:
+        rgba(59, 130, 246, 0.10);
+}
+
+
+.status.driving {
+
+    color:
+        var(--orange-light);
+
+    background:
+        rgba(245, 158, 11, 0.10);
+}
+
+
+.status.completed {
+
+    color:
+        var(--green-light);
+
+    background:
+        rgba(34, 197, 94, 0.10);
+}
+
+
+.transfer-date {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+}
+
+
+.transfer-date strong {
+
+    color: var(--text-soft);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   ROUTE
+   ========================================================= */
+
+.route-box {
+
+    display: grid;
+
+    grid-template-columns: 1fr 80px 1fr;
+
+    align-items: center;
+
+    padding: 18px;
+
+    margin-bottom: 15px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        15px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+}
+
+
+.route-point {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+}
+
+
+.route-point small {
+
+    display: block;
+
+    margin-bottom: 2px;
+
+    color:
+        var(--text-muted);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+
+.route-point strong {
+
+    display: block;
+
+    font-size: 14px;
+}
+
+
+.route-dot {
+
+    width: 11px;
+    height: 11px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    border: 3px solid var(--surface);
+
+    box-shadow:
+        0 0 0 2px currentColor;
+}
+
+
+.route-dot.start {
+
+    color:
+        var(--blue);
+
+    background:
+        var(--blue);
+}
+
+
+.route-dot.end {
+
+    color:
+        var(--green);
+
+    background:
+        var(--green);
+}
+
+
+.route-line {
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--blue),
+            var(--green)
+        );
+
+    opacity: 0.45;
+}
+
+
+/* =========================================================
+   VEHICLE
+   ========================================================= */
+
+.vehicle-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    margin-bottom: 15px;
+}
+
+
+.vehicle-icon {
+
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    font-size: 17px;
+}
+
+
+.vehicle-info small {
+
+    display: block;
+
+    color:
+        var(--text-muted);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+
+.vehicle-info strong {
+
+    display: block;
+
+    margin-top: 1px;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   META
+   ========================================================= */
+
+.transfer-meta {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    padding-top: 14px;
+
+    border-top:
+        1px solid var(--border);
+}
+
+
+.transfer-meta span {
+
+    padding:
+        6px
+        9px;
+
+    border-radius: 8px;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    color:
+        var(--text-muted);
+
+    font-size: 11px;
+}
+
+
+.transfer-meta strong {
+
+    color:
+        var(--text-soft);
+}
+
+
+/* =========================================================
+   NOTES
+   ========================================================= */
+
+.transfer-notes {
+
+    display: flex;
+
+    gap: 9px;
+
+    margin-top: 12px;
+
+    padding: 12px;
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    color:
+        var(--text-soft);
+
+    font-size: 12px;
+}
+
+
+.transfer-notes p {
+
+    flex: 1;
+}
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.transfer-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    margin-top: 17px;
+}
+
+
+.btn {
+
+    min-height: 38px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    padding:
+        8px
+        12px;
+
+    border:
+        1px solid transparent;
+
+    border-radius: 10px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    transition:
+        transform 0.18s ease,
+        background 0.18s ease,
+        border-color 0.18s ease;
+}
+
+
+.btn:hover {
+
+    transform:
+        translateY(-1px);
+}
+
+
+.btn.secondary {
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    border-color:
+        var(--border);
+
+    color:
+        var(--text-soft);
+}
+
+
+.btn.secondary:hover {
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    color:
+        var(--text);
+}
+
+
+.btn.primary {
+
+    background:
+        rgba(59, 130, 246, 0.14);
+
+    border-color:
+        rgba(59, 130, 246, 0.20);
+
+    color:
+        var(--blue-light);
+}
+
+
+.btn.primary:hover {
+
+    background:
+        rgba(59, 130, 246, 0.22);
+}
+
+
+.btn.success {
+
+    background:
+        rgba(34, 197, 94, 0.13);
+
+    border-color:
+        rgba(34, 197, 94, 0.20);
+
+    color:
+        var(--green-light);
+}
+
+
+.btn.success:hover {
+
+    background:
+        rgba(34, 197, 94, 0.21);
+}
+
+
+.btn.danger {
+
+    margin-left: auto;
+
+    width: 38px;
+
+    padding: 0;
+
+    background:
+        rgba(239, 68, 68, 0.08);
+
+    border-color:
+        rgba(239, 68, 68, 0.12);
+
+    color:
+        var(--red-light);
+}
+
+
+.btn.danger:hover {
+
+    background:
+        rgba(239, 68, 68, 0.17);
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 270px;
+
+    padding: 40px;
+
+    border:
+        1px dashed
+        rgba(255, 255, 255, 0.12);
+
+    border-radius:
+        var(--radius-lg);
+
+    background:
+        rgba(255, 255, 255, 0.015);
+
+    text-align: center;
+}
+
+
+.empty-icon {
+
+    width: 65px;
+    height: 65px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 15px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(59, 130, 246, 0.10);
+
+    font-size: 28px;
+}
+
+
+.empty-state h3 {
+
+    font-size: 17px;
+}
+
+
+.empty-state p {
+
+    max-width: 340px;
+
+    margin-top: 5px;
+
+    color:
+        var(--text-muted);
+
+    font-size: 13px;
+}
+
+
+.empty-action {
+
+    margin-top: 18px;
+
+    padding:
+        10px
+        16px;
+
+    border:
+        1px solid
+        rgba(59, 130, 246, 0.25);
+
+    border-radius: 10px;
+
+    background:
+        rgba(59, 130, 246, 0.10);
+
+    color:
+        var(--blue-light);
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.modal {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 500;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        rgba(0, 0, 0, 0.72);
+
+    backdrop-filter:
+        blur(10px);
+
+    -webkit-backdrop-filter:
+        blur(10px);
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+}
+
+
+.modal.active {
+
+    opacity: 1;
+
+    visibility: visible;
+}
+
+
+.modal-content {
+
+    width: min(
+        760px,
+        100%
+    );
+
+    max-height:
+        calc(100vh - 40px);
+
+    overflow-y: auto;
+
+    padding: 28px;
+
+    border:
+        1px solid
+        var(--border-light);
+
+    border-radius:
+        var(--radius-xl);
+
+    background:
+        linear-gradient(
+            145deg,
+            #151b25,
+            #0d1219
+        );
+
+    box-shadow:
+        0 35px 100px
+        rgba(0, 0, 0, 0.65);
+
+    transform:
+        translateY(15px)
+        scale(0.98);
+
+    transition:
+        transform 0.25s ease;
+}
+
+
+.modal.active .modal-content {
+
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+
+.modal-content::-webkit-scrollbar {
+
+    width: 6px;
+}
+
+
+.modal-content::-webkit-scrollbar-thumb {
+
+    background:
+        rgba(255, 255, 255, 0.12);
+
+    border-radius:
+        999px;
+}
+
+
+/* =========================================================
+   MODAL HEADER
+   ========================================================= */
+
+.modal-header {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 25px;
+}
+
+
+.modal-eyebrow {
+
+    display: block;
+
+    margin-bottom: 4px;
+
+    color:
+        var(--blue-light);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.5px;
+}
+
+
+.modal-header h2 {
+
+    font-size: 24px;
+
+    letter-spacing: -0.7px;
+}
+
+
+.close-btn {
+
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.04);
+
+    color:
+        var(--text-muted);
+
+    font-size: 25px;
+
+    line-height: 1;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.close-btn:hover {
+
+    background:
+        rgba(239, 68, 68, 0.10);
+
+    color:
+        var(--red-light);
+
+    transform:
+        rotate(5deg);
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-section {
+
+    margin-bottom: 25px;
+
+    padding: 20px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        var(--radius-lg);
+
+    background:
+        rgba(255, 255, 255, 0.018);
+}
+
+
+.form-section-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+
+.form-section-icon {
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background:
+        rgba(59, 130, 246, 0.10);
+
+    font-size: 18px;
+}
+
+
+.form-section-title strong {
+
+    display: block;
+
+    font-size: 14px;
+}
+
+
+.form-section-title span {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color:
+        var(--text-muted);
+
+    font-size: 11px;
+}
+
+
+.form-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 16px;
+}
+
+
+.form-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.form-group.full {
+
+    grid-column:
+        1 / -1;
+}
+
+
+.form-group label {
+
+    color:
+        var(--text-soft);
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.form-group input,
+.form-group textarea {
+
+    width: 100%;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        12px;
+
+    outline: none;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    color:
+        var(--text);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.form-group input {
+
+    height: 46px;
+
+    padding:
+        0
+        13px;
+}
+
+
+.form-group textarea {
+
+    min-height: 95px;
+
+    resize: vertical;
+
+    padding: 13px;
+}
+
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+
+    color:
+        var(--text-muted);
+}
+
+
+.form-group input:focus,
+.form-group textarea:focus {
+
+    border-color:
+        rgba(59, 130, 246, 0.65);
+
+    background:
+        rgba(59, 130, 246, 0.025);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(59, 130, 246, 0.07);
+}
+
+
+/* =========================================================
+   INPUT WITH ICON
+   ========================================================= */
+
+.input-with-icon {
+
+    position: relative;
+}
+
+
+.input-with-icon > span {
+
+    position: absolute;
+
+    left: 13px;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    z-index: 2;
+}
+
+
+.input-with-icon input {
+
+    padding-left: 40px;
+}
+
+
+/* =========================================================
+   PHOTO SECTION
+   ========================================================= */
+
+.photo-section {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(59, 130, 246, 0.035),
+            rgba(255, 255, 255, 0.015)
+        );
+}
+
+
+.photo-section-title {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 17px;
+}
+
+
+.photo-heading {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.form-section-icon.camera {
+
+    background:
+        rgba(139, 92, 246, 0.11);
+}
+
+
+.photo-heading h3 {
+
+    font-size: 14px;
+}
+
+
+.photo-heading p {
+
+    margin-top: 2px;
+
+    color:
+        var(--text-muted);
+
+    font-size: 11px;
+}
+
+
+.photo-count {
+
+    flex-shrink: 0;
+
+    padding:
+        6px
+        10px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(59, 130, 246, 0.10);
+
+    color:
+        var(--blue-light);
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   PHOTO LIST
+   ========================================================= */
+
+.photo-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.photo-row {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    min-height: 60px;
+
+    padding:
+        8px
+        10px;
+
+    border:
+        1px solid transparent;
+
+    border-radius: 12px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.photo-row:hover {
+
+    background:
+        rgba(255, 255, 255, 0.045);
+
+    border-color:
+        var(--border);
+}
+
+
+.photo-row-icon {
+
+    width: 37px;
+    height: 37px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    font-size: 16px;
+}
+
+
+.photo-row-content {
+
+    flex: 1;
+
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.photo-row-content strong {
+
+    font-size: 12px;
+}
+
+
+.photo-row-content span {
+
+    margin-top: 1px;
+
+    color:
+        var(--text-muted);
+
+    font-size: 10px;
+}
+
+
+.photo-row-content span.added {
+
+    color:
+        var(--green-light);
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   PHOTO BUTTON
+   ========================================================= */
+
+.photo-button {
+
+    position: relative;
+
+    overflow: hidden;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding:
+        8px
+        11px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 9px;
+
+    background:
+        rgba(255, 255, 255, 0.045);
+
+    color:
+        var(--text-soft);
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.photo-button:hover {
+
+    background:
+        rgba(59, 130, 246, 0.12);
+
+    color:
+        var(--blue-light);
+}
+
+
+.photo-button input {
+
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   PHOTO PREVIEW
+   ========================================================= */
+
+.photo-preview {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+
+.photo-preview-item {
+
+    position: relative;
+
+    overflow: hidden;
+
+    aspect-ratio: 1;
+
+    border-radius: 10px;
+
+    border:
+        1px solid var(--border);
+
+    background:
+        var(--surface-2);
+}
+
+
+.photo-preview-item img {
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+
+.photo-preview-item span {
+
+    position: absolute;
+
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+
+    padding: 3px;
+
+    border-radius: 5px;
+
+    background:
+        rgba(0, 0, 0, 0.65);
+
+    color: white;
+
+    font-size: 8px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   SUBMIT
+   ========================================================= */
+
+.submit-btn {
+
+    width: 100%;
+
+    min-height: 52px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--blue),
+            var(--blue-dark)
+        );
+
+    color: white;
+
+    box-shadow:
+        0 10px 30px
+        rgba(37, 99, 235, 0.24);
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+}
+
+
+.submit-btn:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 15px 35px
+        rgba(37, 99, 235, 0.32);
+
+    filter:
+        brightness(1.08);
+}
+
+
+.submit-btn:active {
+
+    transform:
+        scale(0.985);
+}
+
+
+.submit-arrow {
+
+    margin-left: 3px;
+
+    font-size: 17px;
+}
+
+
+.finish-btn {
+
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #15803d
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(34, 197, 94, 0.18);
+}
+
+
+.finish-btn:hover {
+
+    box-shadow:
+        0 15px 35px
+        rgba(34, 197, 94, 0.25);
+}
+
+
+/* =========================================================
+   FINISH INFO
+   ========================================================= */
+
+.finish-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    margin-bottom: 20px;
+
+    padding: 15px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 15px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+}
+
+
+.finish-car-icon {
+
+    width: 45px;
+    height: 45px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background:
+        rgba(34, 197, 94, 0.10);
+
+    font-size: 21px;
+}
+
+
+.finish-info strong {
+
+    display: block;
+
+    font-size: 14px;
+}
+
+
+.finish-info span {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color:
+        var(--text-muted);
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   DETAILS
+   ========================================================= */
+
+.details-section {
+
+    margin-bottom: 20px;
+
+    padding: 20px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        var(--radius-lg);
+
+    background:
+        rgba(255, 255, 255, 0.018);
+}
+
+
+.details-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 10px;
+}
+
+
+.detail-item {
+
+    padding:
+        12px;
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+}
+
+
+.detail-item span {
+
+    display: block;
+
+    margin-bottom: 3px;
+
+    color:
+        var(--text-muted);
+
+    font-size: 10px;
+}
+
+
+.detail-item strong {
+
+    display: block;
+
+    font-size: 12px;
+}
+
+
+.details-note {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 10px;
+
+    padding: 13px;
+
+    border-radius: 11px;
+
+    background:
+        rgba(59, 130, 246, 0.06);
+
+    color:
+        var(--text-soft);
+}
+
+
+.details-note small {
+
+    color:
+        var(--blue-light);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.7px;
+}
+
+
+.details-note p {
+
+    margin-top: 3px;
+
+    font-size: 12px;
+}
+
+
+.details-section-heading {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 13px;
+}
+
+
+.details-section-heading h3 {
+
+    font-size: 14px;
+}
+
+
+.details-section-heading span {
+
+    color:
+        var(--text-muted);
+
+    font-size: 10px;
+}
+
+
+.details-photos {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 8px;
+}
+
+
+.details-photo {
+
+    overflow: hidden;
+
+    position: relative;
+
+    aspect-ratio: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: flex-end;
+
+    border-radius: 10px;
+
+    border:
+        1px solid var(--border);
+
+    background:
+        var(--surface-2);
+}
+
+
+.details-photo img {
+
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+
+.details-photo span {
+
+    position: relative;
+
+    z-index: 2;
+
+    padding: 5px;
+
+    background:
+        linear-gradient(
+            transparent,
+            rgba(0, 0, 0, 0.85)
+        );
+
+    color: white;
+
+    font-size: 8px;
+
+    text-align: center;
+}
+
+
+.details-photo.empty {
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 3px;
+
+    color:
+        var(--text-muted);
+
+    text-align: center;
+}
+
+
+.details-photo.empty div {
+
+    font-size: 20px;
+
+    opacity: 0.45;
+}
+
+
+.details-photo.empty span {
+
+    padding: 0;
+
+    background: none;
+
+    color:
+        var(--text-soft);
+
+    font-size: 9px;
+}
+
+
+.details-photo.empty small {
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+
+    outline:
+        2px solid
+        var(--blue-light);
+
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .dashboard {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+
+    .welcome-decoration {
+
+        width: 105px;
+        height: 105px;
+
+        font-size: 45px;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET / PHONE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .topbar {
+
+        height: 68px;
+
+        padding:
+            0
+            15px;
+    }
+
+
+    .logo-text span {
+
+        display: none;
+    }
+
+
+    .logo-icon {
+
+        width: 38px;
+        height: 38px;
+
+        border-radius: 11px;
+    }
+
+
+    .add-btn {
+
+        padding:
+            10px
+            13px;
+    }
+
+
+    .container {
+
+        width:
+            calc(100% - 24px);
+
+        padding:
+            25px
+            0
+            50px;
+    }
+
+
+    .welcome {
+
+        min-height:
+            auto;
+
+        padding:
+            28px
+            25px;
+
+        border-radius:
+            22px;
+    }
+
+
+    .welcome h1 {
+
+        font-size:
+            30px;
+    }
+
+
+    .welcome p {
+
+        font-size:
+            13px;
+    }
+
+
+    .welcome-decoration {
+
+        display: none;
+    }
+
+
+    .dashboard {
+
+        gap: 9px;
+    }
+
+
+    .stat-card {
+
+        min-height:
+            100px;
+
+        padding:
+            14px;
+
+        gap: 10px;
+
+        border-radius:
+            17px;
+    }
+
+
+    .stat-icon {
+
+        width: 40px;
+        height: 40px;
+
+        border-radius: 12px;
+
+        font-size: 18px;
+    }
+
+
+    .stat-content strong {
+
+        font-size:
+            24px;
+    }
+
+
+    .toolbar {
+
+        flex-direction:
+            column;
+
+        align-items:
+            stretch;
+    }
+
+
+    .filter-box {
+
+        justify-content:
+            space-between;
+    }
+
+
+    .transfer-card {
+
+        padding:
+            17px;
+    }
+
+
+    .route-box {
+
+        grid-template-columns:
+            1fr;
+
+        gap: 12px;
+    }
+
+
+    .route-line {
+
+        width:
+            1px;
+
+        height:
+            18px;
+
+        margin-left:
+            5px;
+
+        background:
+            linear-gradient(
+                var(--blue),
+                var(--green)
             );
-
-        if (input) {
-            input.value = "";
-        }
-
-        const status =
-            document.getElementById(
-                `before-${type}-status`
-            );
-
-        if (status) {
-
-            status.textContent =
-                "Ei kuvaa";
-
-            status.classList.remove(
-                "added"
-            );
-        }
-
-        const preview =
-            document.getElementById(
-                `before-${type}-preview`
-            );
-
-        if (preview) {
-            preview.innerHTML = "";
-        }
-
-    });
-
-    const generalPreview =
-        document.getElementById(
-            "beforePreview"
-        );
-
-    if (generalPreview) {
-        generalPreview.innerHTML = "";
     }
 
-    updateBeforePhotoCount();
+
+    .transfer-actions {
+
+        display:
+            grid;
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    .btn {
+
+        width:
+            100%;
+    }
+
+
+    .btn.danger {
+
+        margin-left:
+            0;
+    }
+
+
+    .modal {
+
+        align-items:
+            flex-end;
+
+        padding:
+            0;
+    }
+
+
+    .modal-content {
+
+        max-height:
+            92vh;
+
+        padding:
+            21px;
+
+        border-radius:
+            24px
+            24px
+            0
+            0;
+    }
+
+
+    .form-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .form-group.full {
+
+        grid-column:
+            auto;
+    }
+
+
+    .photo-preview {
+
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+
+    .details-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .details-photos {
+
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
 }
 
 
-// ======================================================
-// KUVAN PAKKAUS
-// ======================================================
+/* =========================================================
+   SMALL PHONE
+   ========================================================= */
 
-function compressImage(file) {
+@media (max-width: 430px) {
 
-    return new Promise(
-        (resolve, reject) => {
+    .topbar {
 
-            const reader =
-                new FileReader();
-
-            reader.onload = event => {
-
-                const image =
-                    new Image();
-
-                image.onload = () => {
-
-                    let width =
-                        image.width;
-
-                    let height =
-                        image.height;
+        padding:
+            0
+            11px;
+    }
 
 
-                    if (
-                        width > MAX_WIDTH ||
-                        height > MAX_HEIGHT
-                    ) {
+    .logo-text strong {
 
-                        const ratio =
-                            Math.min(
-                                MAX_WIDTH / width,
-                                MAX_HEIGHT / height
-                            );
-
-                        width =
-                            Math.round(
-                                width * ratio
-                            );
-
-                        height =
-                            Math.round(
-                                height * ratio
-                            );
-                    }
+        font-size:
+            15px;
+    }
 
 
-                    const canvas =
-                        document.createElement(
-                            "canvas"
-                        );
+    .add-btn span:last-child {
 
-                    canvas.width =
-                        width;
-
-                    canvas.height =
-                        height;
+        display:
+            none;
+    }
 
 
-                    const context =
-                        canvas.getContext(
-                            "2d"
-                        );
+    .add-btn {
 
-                    context.drawImage(
-                        image,
-                        0,
-                        0,
-                        width,
-                        height
-                    );
+        width:
+            40px;
 
+        height:
+            40px;
 
-                    const compressed =
-                        canvas.toDataURL(
-                            "image/jpeg",
-                            IMAGE_QUALITY
-                        );
+        padding:
+            0;
 
-                    resolve(compressed);
+        justify-content:
+            center;
 
-                };
+        border-radius:
+            12px;
+    }
 
 
-                image.onerror = () => {
+    .add-btn span:first-child {
 
-                    reject(
-                        new Error(
-                            "Kuvan lataaminen epäonnistui."
-                        )
-                    );
-
-                };
+        font-size:
+            22px;
+    }
 
 
-                image.src =
-                    event.target.result;
+    .container {
 
-            };
+        width:
+            calc(100% - 18px);
 
-
-            reader.onerror = () => {
-
-                reject(
-                    new Error(
-                        "Tiedoston lukeminen epäonnistui."
-                    )
-                );
-
-            };
+        padding-top:
+            18px;
+    }
 
 
-            reader.readAsDataURL(file);
+    .welcome {
 
-        }
-    );
+        padding:
+            24px
+            20px;
+    }
+
+
+    .welcome h1 {
+
+        font-size:
+            27px;
+    }
+
+
+    .dashboard {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+
+    .stat-card {
+
+        min-height:
+            90px;
+
+        padding:
+            12px;
+    }
+
+
+    .stat-icon {
+
+        width:
+            35px;
+
+        height:
+            35px;
+
+        font-size:
+            16px;
+    }
+
+
+    .stat-content small {
+
+        font-size:
+            9px;
+    }
+
+
+    .stat-content strong {
+
+        font-size:
+            21px;
+    }
+
+
+    .transfer-card-top {
+
+        flex-direction:
+            column;
+
+        gap:
+            10px;
+    }
+
+
+    .transfer-date {
+
+        align-items:
+            flex-start;
+
+        flex-direction:
+            row;
+
+        gap:
+            5px;
+    }
+
+
+    .transfer-actions {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .photo-row {
+
+        min-height:
+            57px;
+    }
+
+
+    .photo-button {
+
+        padding:
+            8px;
+
+        font-size:
+            9px;
+    }
+
+
+    .photo-button span {
+
+        display:
+            none;
+    }
+
+
+    .form-section {
+
+        padding:
+            15px;
+    }
+
+
+    .modal-header h2 {
+
+        font-size:
+            21px;
+    }
+
+
+    .details-photos {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
 }
 
 
-// ======================================================
-// KUVAN LISÄÄMINEN
-// ======================================================
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
 
-async function addPhoto(section, type) {
+@media (prefers-reduced-motion: reduce) {
 
-    const input =
-        document.getElementById(
-            `${section}-${type}`
-        );
+    *,
+    *::before,
+    *::after {
 
-    if (
-        !input ||
-        !input.files ||
-        !input.files[0]
-    ) {
-        return;
+        scroll-behavior: auto !important;
+
+        transition-duration:
+            0.01ms !important;
+
+        animation-duration:
+            0.01ms !important;
+
+        animation-iteration-count:
+            1 !important;
     }
 
-
-    const file =
-        input.files[0];
-
-
-    if (!file.type.startsWith("image/")) {
-
-        alert(
-            "Valitse kuvatiedosto."
-        );
-
-        return;
-    }
-
-
-    try {
-
-        const compressedImage =
-            await compressImage(file);
-
-
-        if (section === "before") {
-
-            beforePhotoData[type] =
-                compressedImage;
-
-            updateBeforePhotoCount();
-
-            renderPhotoPreview(
-                "before",
-                type,
-                compressedImage
-            );
-        }
-
-
-        if (section === "after") {
-
-            afterPhotoData[type] =
-                compressedImage;
-
-            updateAfterPhotoCount();
-
-            renderPhotoPreview(
-                "after",
-                type,
-                compressedImage
-            );
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Kuvan lisääminen epäonnistui:",
-            error
-        );
-
-        alert(
-            "Kuvan lisääminen epäonnistui."
-        );
-
-    }
 }
-
-
-// ======================================================
-// KUVAN TILA
-// ======================================================
-
-function updatePhotoStatus(
-    section,
-    type
-) {
-
-    const status =
-        document.getElementById(
-            `${section}-${type}-status`
-        );
-
-    if (!status) {
-        return;
-    }
-
-    status.textContent =
-        "✓ Kuva lisätty";
-
-    status.classList.add(
-        "added"
-    );
-}
-
-
-// ======================================================
-// KUVAN ESikatselu
-// ======================================================
-
-function renderPhotoPreview(
-    section,
-    type,
-    imageData
-) {
-
-    const preview =
-        document.getElementById(
-            `${section}-${type}-preview`
-        );
-
-
-    updatePhotoStatus(
-        section,
-        type
-    );
-
-
-    if (!preview) {
-        return;
-    }
-
-
-    preview.innerHTML = `
-
-        <img
-            src="${imageData}"
-            alt="${PHOTO_NAMES[type]}"
-        >
-
-    `;
-}
-
-
-// ======================================================
-// KUVAMÄÄRÄT
-// ======================================================
-
-function updateBeforePhotoCount() {
-
-    const count =
-        getPhotoCount(
-            beforePhotoData
-        );
-
-    const element =
-        document.getElementById(
-            "beforePhotoCount"
-        );
-
-    if (element) {
-
-        element.textContent =
-            `${count} / 5`;
-    }
-}
-
-
-function updateAfterPhotoCount() {
-
-    const count =
-        getPhotoCount(
-            afterPhotoData
-        );
-
-    const element =
-        document.getElementById(
-            "afterPhotoCount"
-        );
-
-    if (element) {
-
-        element.textContent =
-            `${count} / 5`;
-    }
-
-
-    // KUVAT EIVÄT OLE PAKOLLISIA
-
-    const button =
-        document.getElementById(
-            "finishTransferBtn"
-        );
-
-    if (button) {
-
-        button.disabled =
-            false;
-
-        button.innerHTML = `
-            <span>✅</span>
-            Lopeta siirto
-            <span class="submit-arrow">→</span>
-        `;
-    }
-}
-
-
-// ======================================================
-// UUDEN SIIRRON TALLENNUS
-// ======================================================
-
-const transferForm =
-    document.getElementById(
-        "transferForm"
-    );
-
-
-if (transferForm) {
-
-    transferForm.addEventListener(
-        "submit",
-        function (event) {
-
-            event.preventDefault();
-
-
-            const customer =
-                document
-                    .getElementById(
-                        "customer"
-                    )
-                    ?.value
-                    .trim();
-
-
-            const date =
-                document
-                    .getElementById(
-                        "date"
-                    )
-                    ?.value;
-
-
-            const time =
-                document
-                    .getElementById(
-                        "time"
-                    )
-                    ?.value;
-
-
-            const vehicle =
-                document
-                    .getElementById(
-                        "vehicle"
-                    )
-                    ?.value
-                    .trim();
-
-
-            const from =
-                document
-                    .getElementById(
-                        "from"
-                    )
-                    ?.value
-                    .trim();
-
-
-            const to =
-                document
-                    .getElementById(
-                        "to"
-                    )
-                    ?.value
-                    .trim();
-
-
-            const notes =
-                document
-                    .getElementById(
-                        "notes"
-                    )
-                    ?.value
-                    .trim();
-
-
-            if (
-                !customer ||
-                !date ||
-                !vehicle ||
-                !from ||
-                !to
-            ) {
-
-                alert(
-                    "Täytä kaikki pakolliset siirtotiedot."
-                );
-
-                return;
-            }
-
-
-            const newTransfer = {
-
-                id: Date.now(),
-
-                customer,
-
-                date,
-
-                time,
-
-                vehicle,
-
-                from,
-
-                to,
-
-                notes,
-
-                status: "pending",
-
-                createdAt:
-                    new Date()
-                        .toISOString(),
-
-                beforePhotos:
-                    normalizePhotos(
-                        beforePhotoData
-                    ),
-
-                afterPhotos:
-                    createEmptyPhotos()
-
-            };
-
-
-            transfers.unshift(
-                newTransfer
-            );
-
-
-            const saved =
-                saveTransfers();
-
-
-            if (!saved) {
-
-                transfers.shift();
-
-                return;
-            }
-
-
-            renderTransfers();
-
-            updateDashboard();
-
-
-            transferForm.reset();
-
-            resetBeforePhotos();
-
-            closeForm();
-
-        }
-    );
-}
-
-
-// ======================================================
-// SIIRTOJEN NÄYTTÄMINEN
-// ======================================================
-
-function renderTransfers() {
-
-    const container =
-        document.getElementById(
-            "transferList"
-        );
-
-    if (!container) {
-        return;
-    }
-
-
-    const searchInput =
-        document.getElementById(
-            "searchInput"
-        );
-
-
-    const filterSelect =
-        document.getElementById(
-            "filterStatus"
-        );
-
-
-    const search =
-        searchInput
-            ? searchInput.value
-                .toLowerCase()
-                .trim()
-            : "";
-
-
-    const filter =
-        filterSelect
-            ? filterSelect.value
-            : "all";
-
-
-    const filteredTransfers =
-        transfers.filter(
-            transfer => {
-
-                const customer =
-                    String(
-                        transfer.customer || ""
-                    ).toLowerCase();
-
-
-                const vehicle =
-                    String(
-                        transfer.vehicle || ""
-                    ).toLowerCase();
-
-
-                const from =
-                    String(
-                        transfer.from || ""
-                    ).toLowerCase();
-
-
-                const to =
-                    String(
-                        transfer.to || ""
-                    ).toLowerCase();
-
-
-                const matchesSearch =
-                    !search ||
-                    customer.includes(search) ||
-                    vehicle.includes(search) ||
-                    from.includes(search) ||
-                    to.includes(search);
-
-
-                const matchesFilter =
-                    filter === "all" ||
-                    transfer.status === filter;
-
-
-                return (
-                    matchesSearch &&
-                    matchesFilter
-                );
-
-            }
-        );
-
-
-    if (
-        filteredTransfers.length === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div class="empty-state">
-
-                <div class="empty-icon">
-                    🚗
-                </div>
-
-                <h3>
-                    Ei siirtoja
-                </h3>
-
-                <p>
-                    Lisää ensimmäinen siirto
-                    painamalla "Uusi siirto".
-                </p>
-
-                <button
-                    class="empty-action"
-                    onclick="openForm()"
-                    type="button"
-                >
-                    ＋ Lisää siirto
-                </button>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        filteredTransfers
-            .map(
-                createTransferCard
-            )
-            .join("");
-}
-
-
-// ======================================================
-// SIIRTO-KORTTI
-// ======================================================
-
-function createTransferCard(
-    transfer
-) {
-
-    const beforeCount =
-        getPhotoCount(
-            normalizePhotos(
-                transfer.beforePhotos
-            )
-        );
-
-
-    const afterCount =
-        getPhotoCount(
-            normalizePhotos(
-                transfer.afterPhotos
-            )
-        );
-
-
-    let statusText =
-        "Suunniteltu";
-
-    let statusClass =
-        "pending";
-
-
-    if (
-        transfer.status === "driving"
-    ) {
-
-        statusText =
-            "Matkalla";
-
-        statusClass =
-            "driving";
-    }
-
-
-    if (
-        transfer.status === "completed"
-    ) {
-
-        statusText =
-            "Valmis";
-
-        statusClass =
-            "completed";
-    }
-
-
-    const safeCustomer =
-        escapeHtml(
-            transfer.customer
-        );
-
-
-    const safeVehicle =
-        escapeHtml(
-            transfer.vehicle
-        );
-
-
-    const safeFrom =
-        escapeHtml(
-            transfer.from
-        );
-
-
-    const safeTo =
-        escapeHtml(
-            transfer.to
-        );
-
-
-    const safeNotes =
-        escapeHtml(
-            transfer.notes
-        );
-
-
-    return `
-
-        <article
-            class="transfer-card ${statusClass}"
-        >
-
-            <div class="transfer-card-top">
-
-
-                <div class="transfer-main-info">
-
-                    <div class="transfer-status-row">
-
-                        <span
-                            class="status ${statusClass}"
-                        >
-                            <span class="status-dot"></span>
-                            ${statusText}
-                        </span>
-
-                    </div>
-
-
-                    <h3>
-                        ${safeCustomer}
-                    </h3>
-
-                </div>
-
-
-                <div class="transfer-date">
-
-                    <strong>
-                        ${formatDate(
-                            transfer.date
-                        )}
-                    </strong>
-
-                    ${
-                        transfer.time
-                            ? `
-                            <span>
-                                ${escapeHtml(
-                                    transfer.time
-                                )}
-                            </span>
-                            `
-                            : ""
-                    }
-
-                </div>
-
-            </div>
-
-
-            <div class="route-box">
-
-                <div class="route-point">
-
-                    <span class="route-dot start"></span>
-
-                    <div>
-
-                        <small>
-                            LÄHTÖ
-                        </small>
-
-                        <strong>
-                            ${safeFrom}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="route-line"></div>
-
-
-                <div class="route-point">
-
-                    <span class="route-dot end"></span>
-
-                    <div>
-
-                        <small>
-                            KOHDE
-                        </small>
-
-                        <strong>
-                            ${safeTo}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="vehicle-info">
-
-                <span class="vehicle-icon">
-                    🚗
-                </span>
-
-                <div>
-
-                    <small>
-                        AJONEUVO
-                    </small>
-
-                    <strong>
-                        ${safeVehicle}
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <div class="transfer-meta">
-
-                <span>
-                    📸 Ennen
-                    <strong>
-                        ${beforeCount}/5
-                    </strong>
-                </span>
-
-                <span>
-                    📸 Jälkeen
-                    <strong>
-                        ${afterCount}/5
-                    </strong>
-                </span>
-
-            </div>
-
-
-            ${
-                transfer.notes
-                    ? `
-
-                    <div class="transfer-notes">
-
-                        <span>
-                            📝
-                        </span>
-
-                        <p>
-                            ${safeNotes}
-                        </p>
-
-                    </div>
-
-                    `
-                    : ""
-            }
-
-
-            <div class="transfer-actions">
-
-
-                <button
-                    class="btn secondary"
-                    onclick="showDetails(${transfer.id})"
-                    type="button"
-                >
-                    <span>👁️</span>
-                    Tiedot
-                </button>
-
-
-                ${
-                    transfer.status !== "completed"
-                        ? `
-
-                        <button
-                            class="btn primary"
-                            onclick="openMaps(${transfer.id})"
-                            type="button"
-                        >
-                            <span>🗺️</span>
-                            Reitti
-                        </button>
-
-                        `
-                        : ""
-                }
-
-
-                ${
-                    transfer.status === "pending"
-                        ? `
-
-                        <button
-                            class="btn success"
-                            onclick="changeStatus(
-                                ${transfer.id},
-                                'driving'
-                            )"
-                            type="button"
-                        >
-                            <span>🚗</span>
-                            Aloita
-                        </button>
-
-                        `
-                        : ""
-                }
-
-
-                ${
-                    transfer.status === "driving"
-                        ? `
-
-                        <button
-                            class="btn success"
-                            onclick="openFinishModal(
-                                ${transfer.id}
-                            )"
-                            type="button"
-                        >
-                            <span>✓</span>
-                            Lopeta
-                        </button>
-
-                        `
-                        : ""
-                }
-
-
-                <button
-                    class="btn danger"
-                    onclick="deleteTransfer(
-                        ${transfer.id}
-                    )"
-                    type="button"
-                    aria-label="Poista siirto"
-                >
-                    🗑️
-                </button>
-
-            </div>
-
-        </article>
-
-    `;
-}
-
-
-// ======================================================
-// STATUS
-// ======================================================
-
-function changeStatus(
-    id,
-    newStatus
-) {
-
-    const transfer =
-        transfers.find(
-            transfer =>
-                transfer.id === id
-        );
-
-
-    if (!transfer) {
-        return;
-    }
-
-
-    transfer.status =
-        newStatus;
-
-
-    if (
-        newStatus === "driving"
-    ) {
-
-        transfer.startedAt =
-            new Date()
-                .toISOString();
-    }
-
-
-    const saved =
-        saveTransfers();
-
-
-    if (!saved) {
-        return;
-    }
-
-
-    renderTransfers();
-
-    updateDashboard();
-}
-
-
-// ======================================================
-// LOPETA SIIRTO
-// ======================================================
-
-function openFinishModal(id) {
-
-    const transfer =
-        transfers.find(
-            transfer =>
-                transfer.id === id
-        );
-
-
-    if (!transfer) {
-        return;
-    }
-
-
-    finishingTransferId =
-        id;
-
-
-    afterPhotoData =
-        normalizePhotos(
-            transfer.afterPhotos
-        );
-
-
-    const vehicleElement =
-        document.getElementById(
-            "finishVehicle"
-        );
-
-
-    const routeElement =
-        document.getElementById(
-            "finishRoute"
-        );
-
-
-    if (vehicleElement) {
-
-        vehicleElement.textContent =
-            transfer.vehicle;
-    }
-
-
-    if (routeElement) {
-
-        routeElement.textContent =
-            `${transfer.from} → ${transfer.to}`;
-    }
-
-
-    resetAfterPhotoInterface();
-
-
-    const modal =
-        document.getElementById(
-            "finishModal"
-        );
-
-
-    if (modal) {
-
-        modal.classList.add(
-            "active"
-        );
-    }
-
-
-    updateAfterPhotoCount();
-}
-
-
-// ======================================================
-// LOPETUKSEN KUVAT
-// ======================================================
-
-function resetAfterPhotoInterface() {
-
-    PHOTO_TYPES.forEach(
-        type => {
-
-            const input =
-                document.getElementById(
-                    `after-${type}`
-                );
-
-
-            if (input) {
-
-                input.value = "";
-            }
-
-
-            const status =
-                document.getElementById(
-                    `after-${type}-status`
-                );
-
-
-            const preview =
-                document.getElementById(
-                    `after-${type}-preview`
-                );
-
-
-            if (afterPhotoData[type]) {
-
-                if (status) {
-
-                    status.textContent =
-                        "✓ Kuva lisätty";
-
-                    status.classList.add(
-                        "added"
-                    );
-                }
-
-                if (preview) {
-
-                    preview.innerHTML = `
-
-                        <img
-                            src="${afterPhotoData[type]}"
-                            alt="${PHOTO_NAMES[type]}"
-                        >
-
-                    `;
-                }
-
-            } else {
-
-                if (status) {
-
-                    status.textContent =
-                        "Ei kuvaa";
-
-                    status.classList.remove(
-                        "added"
-                    );
-                }
-
-                if (preview) {
-
-                    preview.innerHTML = "";
-                }
-            }
-
-        }
-    );
-
-
-    const generalPreview =
-        document.getElementById(
-            "afterPreview"
-        );
-
-
-    if (generalPreview) {
-
-        generalPreview.innerHTML =
-            createGeneralPhotoPreview(
-                afterPhotoData
-            );
-    }
-
-
-    updateAfterPhotoCount();
-}
-
-
-// ======================================================
-// YLEINEN KUVAPREVIKKA
-// ======================================================
-
-function createGeneralPhotoPreview(
-    photos
-) {
-
-    return PHOTO_TYPES
-        .filter(
-            type => photos[type]
-        )
-        .map(
-            type => `
-
-                <div class="photo-preview-item">
-
-                    <img
-                        src="${photos[type]}"
-                        alt="${PHOTO_NAMES[type]}"
-                    >
-
-                    <span>
-                        ${PHOTO_NAMES[type]}
-                    </span>
-
-                </div>
-
-            `
-        )
-        .join("");
-}
-
-
-// ======================================================
-// SULJE LOPETA
-// ======================================================
-
-function closeFinishModal() {
-
-    const modal =
-        document.getElementById(
-            "finishModal"
-        );
-
-
-    if (modal) {
-
-        modal.classList.remove(
-            "active"
-        );
-    }
-
-
-    finishingTransferId =
-        null;
-}
-
-
-// ======================================================
-// SIIRRON LOPETTAMINEN
-// ======================================================
-
-function finishTransfer() {
-
-    if (!finishingTransferId) {
-        return;
-    }
-
-
-    const transfer =
-        transfers.find(
-            transfer =>
-                transfer.id ===
-                finishingTransferId
-        );
-
-
-    if (!transfer) {
-        return;
-    }
-
-
-    // KUVIA EI TARKISTETA.
-    // Ne ovat täysin vapaaehtoisia.
-
-    transfer.afterPhotos =
-        normalizePhotos(
-            afterPhotoData
-        );
-
-
-    transfer.status =
-        "completed";
-
-
-    transfer.completedAt =
-        new Date()
-            .toISOString();
-
-
-    const saved =
-        saveTransfers();
-
-
-    if (!saved) {
-        return;
-    }
-
-
-    renderTransfers();
-
-    updateDashboard();
-
-    closeFinishModal();
-}
-
-
-// ======================================================
-// POISTA SIIRTO
-// ======================================================
-
-function deleteTransfer(id) {
-
-    const transfer =
-        transfers.find(
-            transfer =>
-                transfer.id === id
-        );
-
-
-    if (!transfer) {
-        return;
-    }
-
-
-    const confirmed =
-        confirm(
-            `Poistetaanko siirto "${transfer.customer}"?`
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    transfers =
-        transfers.filter(
-            transfer =>
-                transfer.id !== id
-        );
-
-
-    const saved =
-        saveTransfers();
-
-
-    if (!saved) {
-        return;
-    }
-
-
-    renderTransfers();
-
-    updateDashboard();
-}
-
-
-// ======================================================
-// GOOGLE MAPS
-// ======================================================
-
-function openMaps(id) {
-
-    const transfer =
-        transfers.find(
-            transfer =>
-                transfer.id === id
-        );
-
-
-    if (!transfer) {
-        return;
-    }
-
-
-    const origin =
-        encodeURIComponent(
-            transfer.from
-        );
-
-
-    const destination =
-        encodeURIComponent(
-            transfer.to
-        );
-
-
-    const url =
-        "https://www.google.com/maps/dir/" +
-        "?api=1" +
-        `&origin=${origin}` +
-        `&destination=${destination}`;
-
-
-    window.open(
-        url,
-        "_blank"
-    );
-}
-
-
-// ======================================================
-// TIEDOT
-// ======================================================
-
-function showDetails(id) {
-
-    const transfer =
-        transfers.find(
-            transfer =>
-                transfer.id === id
-        );
-
-
-    if (!transfer) {
-        return;
-    }
-
-
-    const modal =
-        document.getElementById(
-            "detailsModal"
-        );
-
-
-    const content =
-        document.getElementById(
-            "detailsContent"
-        );
-
-
-    const title =
-        document.getElementById(
-            "detailsTitle"
-        );
-
-
-    if (
-        !modal ||
-        !content
-    ) {
-        return;
-    }
-
-
-    if (title) {
-
-        title.textContent =
-            transfer.customer;
-    }
-
-
-    const beforePhotos =
-        normalizePhotos(
-            transfer.beforePhotos
-        );
-
-
-    const afterPhotos =
-        normalizePhotos(
-            transfer.afterPhotos
-        );
-
-
-    content.innerHTML = `
-
-        <div class="details-section">
-
-            <div class="details-grid">
-
-                <div class="detail-item">
-
-                    <span>
-                        👤 Asiakas
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(
-                            transfer.customer
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>
-                        🚗 Ajoneuvo
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(
-                            transfer.vehicle
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>
-                        📅 Päivä
-                    </span>
-
-                    <strong>
-                        ${formatDate(
-                            transfer.date
-                        )}
-                    </strong>
-
-                </div>
-
-
-                ${
-                    transfer.time
-                        ? `
-
-                        <div class="detail-item">
-
-                            <span>
-                                🕐 Aika
-                            </span>
-
-                            <strong>
-                                ${escapeHtml(
-                                    transfer.time
-                                )}
-                            </strong>
-
-                        </div>
-
-                        `
-                        : ""
-                }
-
-
-                <div class="detail-item">
-
-                    <span>
-                        📍 Lähtö
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(
-                            transfer.from
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>
-                        🏁 Kohde
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(
-                            transfer.to
-                        )}
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            ${
-                transfer.notes
-                    ? `
-
-                    <div class="details-note">
-
-                        <span>
-                            📝
-                        </span>
-
-                        <div>
-
-                            <small>
-                                LISÄTIEDOT
-                            </small>
-
-                            <p>
-                                ${escapeHtml(
-                                    transfer.notes
-                                )}
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                    `
-                    : ""
-            }
-
-        </div>
-
-
-        <div class="details-section">
-
-            <div class="details-section-heading">
-
-                <div>
-
-                    <h3>
-                        📸 Ennen lähtöä
-                    </h3>
-
-                    <span>
-                        ${getPhotoCount(
-                            beforePhotos
-                        )} / 5 kuvaa
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="details-photos">
-
-                ${createDetailsPhotos(
-                    beforePhotos
-                )}
-
-            </div>
-
-        </div>
-
-
-        <div class="details-section">
-
-            <div class="details-section-heading">
-
-                <div>
-
-                    <h3>
-                        📸 Kohteessa
-                    </h3>
-
-                    <span>
-                        ${getPhotoCount(
-                            afterPhotos
-                        )} / 5 kuvaa
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="details-photos">
-
-                ${createDetailsPhotos(
-                    afterPhotos
-                )}
-
-            </div>
-
-        </div>
-
-    `;
-
-
-    modal.classList.add(
-        "active"
-    );
-}
-
-
-// ======================================================
-// DETAILSIEN KUVAT
-// ======================================================
-
-function createDetailsPhotos(
-    photos
-) {
-
-    return PHOTO_TYPES
-        .map(
-            type => {
-
-                if (!photos[type]) {
-
-                    return `
-
-                        <div
-                            class="details-photo empty"
-                        >
-
-                            <div>
-                                📷
-                            </div>
-
-                            <span>
-                                ${PHOTO_NAMES[type]}
-                            </span>
-
-                            <small>
-                                Ei kuvaa
-                            </small>
-
-                        </div>
-
-                    `;
-                }
-
-
-                return `
-
-                    <div class="details-photo">
-
-                        <img
-                            src="${photos[type]}"
-                            alt="${PHOTO_NAMES[type]}"
-                        >
-
-                        <span>
-                            ${PHOTO_NAMES[type]}
-                        </span>
-
-                    </div>
-
-                `;
-
-            }
-        )
-        .join("");
-}
-
-
-// ======================================================
-// SULJE TIEDOT
-// ======================================================
-
-function closeDetails() {
-
-    const modal =
-        document.getElementById(
-            "detailsModal"
-        );
-
-
-    if (modal) {
-
-        modal.classList.remove(
-            "active"
-        );
-    }
-}
-
-
-// ======================================================
-// DASHBOARD
-// ======================================================
-
-function updateDashboard() {
-
-    const total =
-        transfers.length;
-
-
-    const todayString =
-        getLocalDateString(
-            new Date()
-        );
-
-
-    const today =
-        transfers.filter(
-            transfer =>
-                transfer.date ===
-                todayString
-        ).length;
-
-
-    const driving =
-        transfers.filter(
-            transfer =>
-                transfer.status ===
-                "driving"
-        ).length;
-
-
-    const completed =
-        transfers.filter(
-            transfer =>
-                transfer.status ===
-                "completed"
-        ).length;
-
-
-    // UUSI HTML
-
-    const totalElement =
-        document.getElementById(
-            "totalCount"
-        );
-
-
-    const todayElement =
-        document.getElementById(
-            "todayCount"
-        );
-
-
-    const activeElement =
-        document.getElementById(
-            "activeCount"
-        );
-
-
-    const completedElement =
-        document.getElementById(
-            "completedCount"
-        );
-
-
-    if (totalElement) {
-
-        animateNumber(
-            totalElement,
-            total
-        );
-    }
-
-
-    if (todayElement) {
-
-        animateNumber(
-            todayElement,
-            today
-        );
-    }
-
-
-    if (activeElement) {
-
-        animateNumber(
-            activeElement,
-            driving
-        );
-    }
-
-
-    if (completedElement) {
-
-        animateNumber(
-            completedElement,
-            completed
-        );
-    }
-}
-
-
-// ======================================================
-// DASHBOARD-NUMERON ANIMAATIO
-// ======================================================
-
-function animateNumber(
-    element,
-    target
-) {
-
-    const current =
-        Number(
-            element.textContent
-        ) || 0;
-
-
-    if (current === target) {
-        return;
-    }
-
-
-    element.textContent =
-        target;
-}
-
-
-// ======================================================
-// PAIKALLINEN PÄIVÄMÄÄRÄ
-// ======================================================
-
-function getLocalDateString(
-    date
-) {
-
-    const year =
-        date.getFullYear();
-
-
-    const month =
-        String(
-            date.getMonth() + 1
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    const day =
-        String(
-            date.getDate()
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    return `${year}-${month}-${day}`;
-}
-
-
-// ======================================================
-// PÄIVÄMÄÄRÄN MUOTOILU
-// ======================================================
-
-function formatDate(
-    dateString
-) {
-
-    if (!dateString) {
-        return "";
-    }
-
-
-    const date =
-        new Date(
-            `${dateString}T00:00:00`
-        );
-
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-
-        return dateString;
-    }
-
-
-    return date.toLocaleDateString(
-        "fi-FI",
-        {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        }
-    );
-}
-
-
-// ======================================================
-// HTML-TURVALLISUUS
-// ======================================================
-
-function escapeHtml(
-    value
-) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return "";
-    }
-
-
-    return String(value)
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-}
-
-
-// ======================================================
-// HAKU
-// ======================================================
-
-const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
-
-
-if (searchInput) {
-
-    searchInput.addEventListener(
-        "input",
-        renderTransfers
-    );
-}
-
-
-// ======================================================
-// SUODATUS
-// ======================================================
-
-const filterStatus =
-    document.getElementById(
-        "filterStatus"
-    );
-
-
-if (filterStatus) {
-
-    filterStatus.addEventListener(
-        "change",
-        renderTransfers
-    );
-}
-
-
-// ======================================================
-// MODAALIEN SULKEMINEN
-// ======================================================
-
-document.addEventListener(
-    "click",
-    function (event) {
-
-        if (
-            event.target.classList.contains(
-                "modal"
-            )
-        ) {
-
-            event.target.classList.remove(
-                "active"
-            );
-        }
-
-    }
-);
-
-
-// ======================================================
-// ESC = SULJE MODAALI
-// ======================================================
-
-document.addEventListener(
-    "keydown",
-    function (event) {
-
-        if (event.key !== "Escape") {
-            return;
-        }
-
-
-        document
-            .querySelectorAll(
-                ".modal.active"
-            )
-            .forEach(
-                modal => {
-
-                    modal.classList.remove(
-                        "active"
-                    );
-
-                }
-            );
-
-
-        finishingTransferId =
-            null;
-    }
-);
-
-
-// ======================================================
-// KÄYNNISTYS
-// ======================================================
-
-loadTransfers();
