@@ -1,12 +1,10 @@
-```javascript
 let transfers = [];
 
 let beforePhotoData = createEmptyPhotos();
 let afterPhotoData = createEmptyPhotos();
-
 let finishingTransferId = null;
 
-const photoTypes = [
+const PHOTO_TYPES = [
     "mittaristo",
     "vasen",
     "oikea",
@@ -14,190 +12,101 @@ const photoTypes = [
     "takaa"
 ];
 
-const photoNames = {
+const PHOTO_NAMES = {
     mittaristo: "Mittaristo",
-    vasen: "Vasen sivu",
-    oikea: "Oikea sivu",
+    vasen: "Vasen",
+    oikea: "Oikea",
     edesta: "Edestä",
     takaa: "Takaa"
 };
 
+// Kuvien pakkaus ennen tallennusta
+const MAX_WIDTH = 1200;
+const MAX_HEIGHT = 1200;
+const IMAGE_QUALITY = 0.72;
 
-// ============================
-// TYHJÄT KUVAT
-// ============================
+
+// =========================
+// KUVAT
+// =========================
 
 function createEmptyPhotos() {
     return {
-        mittaristo: [],
-        vasen: [],
-        oikea: [],
-        edesta: [],
-        takaa: []
+        mittaristo: null,
+        vasen: null,
+        oikea: null,
+        edesta: null,
+        takaa: null
     };
 }
 
-
-// ============================
-// NORMALISOI KUVAT
-// ============================
-
 function normalizePhotos(photos) {
-
-    const result = createEmptyPhotos();
+    const normalized = createEmptyPhotos();
 
     if (!photos) {
-        return result;
+        return normalized;
     }
 
-    photoTypes.forEach(type => {
-
-        if (Array.isArray(photos[type])) {
-            result[type] = photos[type];
-
-        } else if (photos[type]) {
-            result[type] = [photos[type]];
+    PHOTO_TYPES.forEach(type => {
+        if (photos[type]) {
+            normalized[type] = photos[type];
         }
     });
 
-    // Vanhan version "sivut"
-    if (Array.isArray(photos.sivut)) {
-
-        if (photos.sivut[0]) {
-            result.vasen = [photos.sivut[0]];
-        }
-
-        if (photos.sivut[1]) {
-            result.oikea = [photos.sivut[1]];
-        }
-    }
-
-    return result;
+    return normalized;
 }
-
-
-// ============================
-// KUVAMÄÄRÄ
-// ============================
 
 function getPhotoCount(photos) {
-
-    if (!photos) {
-        return 0;
-    }
-
-    return Object.values(photos).reduce(
-        (total, group) => {
-
-            if (!Array.isArray(group)) {
-                return total;
-            }
-
-            return total + group.length;
-
-        },
-        0
-    );
+    return PHOTO_TYPES.filter(type => photos[type]).length;
 }
-
-
-// ============================
-// ONKO KAIKKI 5 KUVAA?
-// ============================
 
 function hasAllFivePhotos(photos) {
-
-    if (!photos) {
-        return false;
-    }
-
-    return photoTypes.every(
-        type =>
-            Array.isArray(photos[type]) &&
-            photos[type].length > 0
-    );
+    return getPhotoCount(photos) === 5;
 }
 
 
-// ============================
-// LATAA SIIRROT
-// ============================
+// =========================
+// TALLENNUS
+// =========================
 
 function loadTransfers() {
+    try {
+        const saved = localStorage.getItem("siirtoAppTransfers");
 
-    const saved = localStorage.getItem(
-        "siirtoAppTransfers"
-    );
-
-    if (saved) {
-
-        try {
-
+        if (saved) {
             transfers = JSON.parse(saved);
 
-            if (!Array.isArray(transfers)) {
-                transfers = [];
-            }
-
-            transfers = transfers.map(
-                transfer => ({
-
-                    ...transfer,
-
-                    beforePhotos:
-                        normalizePhotos(
-                            transfer.beforePhotos
-                        ),
-
-                    afterPhotos:
-                        normalizePhotos(
-                            transfer.afterPhotos
-                        )
-                })
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Siirtojen lataaminen epäonnistui:",
-                error
-            );
-
+            transfers = transfers.map(transfer => ({
+                ...transfer,
+                beforePhotos: normalizePhotos(transfer.beforePhotos),
+                afterPhotos: normalizePhotos(transfer.afterPhotos)
+            }));
+        } else {
             transfers = [];
         }
+    } catch (error) {
+        console.error("Siirtojen lataaminen epäonnistui:", error);
+        transfers = [];
     }
 
     renderTransfers();
     updateDashboard();
 }
 
-
-// ============================
-// TALLENNA SIIRROT
-// ============================
-
 function saveTransfers() {
-
     try {
-
         localStorage.setItem(
             "siirtoAppTransfers",
             JSON.stringify(transfers)
         );
 
         return true;
-
     } catch (error) {
-
-        console.error(
-            "Siirtojen tallentaminen epäonnistui:",
-            error
-        );
+        console.error("Tallennus epäonnistui:", error);
 
         alert(
-            "Siirron tallentaminen epäonnistui. " +
-            "Selaimen tallennustila saattaa olla täynnä. " +
-            "Kokeile ottaa kuvat uudelleen tai poistaa vanhoja siirtoja."
+            "Siirtoa ei voitu tallentaa.\n\n" +
+            "Puhelimen tallennustila selaimessa saattaa olla täynnä."
         );
 
         return false;
@@ -205,88 +114,69 @@ function saveTransfers() {
 }
 
 
-// ============================
-// KUVAN PIENENTÄMINEN
-// ============================
+// =========================
+// UUSI SIIRTO
+// =========================
+
+function openForm() {
+    const modal = document.getElementById("formModal");
+
+    if (!modal) return;
+
+    modal.classList.add("active");
+
+    resetBeforePhotos();
+}
+
+function closeForm() {
+    const modal = document.getElementById("formModal");
+
+    if (!modal) return;
+
+    modal.classList.remove("active");
+}
+
+function resetBeforePhotos() {
+    beforePhotoData = createEmptyPhotos();
+
+    PHOTO_TYPES.forEach(type => {
+        const input = document.getElementById(`before-${type}`);
+
+        if (input) {
+            input.value = "";
+        }
+    });
+
+    updateBeforePhotoCount();
+}
 
 function compressImage(file) {
-
     return new Promise((resolve, reject) => {
-
-        if (!file) {
-            reject(
-                new Error("Kuvatiedostoa ei löytynyt.")
-            );
-            return;
-        }
-
         const reader = new FileReader();
 
-        reader.onload = function (event) {
-
+        reader.onload = event => {
             const image = new Image();
 
-            image.onload = function () {
-
-                const MAX_WIDTH = 1200;
-                const MAX_HEIGHT = 1200;
-                const QUALITY = 0.72;
-
+            image.onload = () => {
                 let width = image.width;
                 let height = image.height;
 
-                // Pienennetään vain tarvittaessa
-                if (
-                    width > MAX_WIDTH ||
-                    height > MAX_HEIGHT
-                ) {
+                if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+                    const ratio = Math.min(
+                        MAX_WIDTH / width,
+                        MAX_HEIGHT / height
+                    );
 
-                    const widthRatio =
-                        MAX_WIDTH / width;
-
-                    const heightRatio =
-                        MAX_HEIGHT / height;
-
-                    const ratio =
-                        Math.min(
-                            widthRatio,
-                            heightRatio
-                        );
-
-                    width =
-                        Math.round(
-                            width * ratio
-                        );
-
-                    height =
-                        Math.round(
-                            height * ratio
-                        );
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
                 }
 
-                const canvas =
-                    document.createElement(
-                        "canvas"
-                    );
+                const canvas = document.createElement("canvas");
 
                 canvas.width = width;
                 canvas.height = height;
 
-                const context =
-                    canvas.getContext(
-                        "2d"
-                    );
-
-                if (!context) {
-
-                    reject(
-                        new Error(
-                            "Kuvan käsittely epäonnistui."
-                        )
-                    );
-
-                    return;
-                }
+                const context = canvas.getContext("2d");
 
                 context.drawImage(
                     image,
@@ -296,1643 +186,837 @@ function compressImage(file) {
                     height
                 );
 
-                const compressed =
-                    canvas.toDataURL(
-                        "image/jpeg",
-                        QUALITY
-                    );
-
-                resolve(compressed);
-            };
-
-            image.onerror = function () {
-
-                reject(
-                    new Error(
-                        "Kuvan avaaminen epäonnistui."
-                    )
+                const compressedImage = canvas.toDataURL(
+                    "image/jpeg",
+                    IMAGE_QUALITY
                 );
+
+                resolve(compressedImage);
             };
 
-            image.src =
-                event.target.result;
+            image.onerror = () => {
+                reject(new Error("Kuvan lataaminen epäonnistui."));
+            };
+
+            image.src = event.target.result;
         };
 
-        reader.onerror = function () {
-
-            reject(
-                new Error(
-                    "Kuvan lukeminen epäonnistui."
-                )
-            );
+        reader.onerror = () => {
+            reject(new Error("Tiedoston lukeminen epäonnistui."));
         };
 
         reader.readAsDataURL(file);
     });
 }
 
+async function addPhoto(section, type) {
+    const input = document.getElementById(`${section}-${type}`);
 
-// ============================
-// AVAA UUSI SIIRTO
-// ============================
-
-function openForm() {
-
-    const modal =
-        document.getElementById(
-            "formModal"
-        );
-
-    if (!modal) {
+    if (!input || !input.files || !input.files[0]) {
         return;
     }
 
-    modal.classList.add(
-        "active"
-    );
-
-    const now =
-        new Date();
-
-    const dateInput =
-        document.getElementById(
-            "date"
-        );
-
-    const timeInput =
-        document.getElementById(
-            "time"
-        );
-
-    if (dateInput) {
-
-        const year =
-            now.getFullYear();
-
-        const month =
-            String(
-                now.getMonth() + 1
-            ).padStart(
-                2,
-                "0"
-            );
-
-        const day =
-            String(
-                now.getDate()
-            ).padStart(
-                2,
-                "0"
-            );
-
-        dateInput.value =
-            `${year}-${month}-${day}`;
-    }
-
-    if (timeInput) {
-
-        timeInput.value =
-            now.toTimeString()
-                .slice(0, 5);
-    }
-
-    resetBeforePhotos();
-}
-
-
-// ============================
-// SULJE UUSI SIIRTO
-// ============================
-
-function closeForm() {
-
-    const modal =
-        document.getElementById(
-            "formModal"
-        );
-
-    if (modal) {
-
-        modal.classList.remove(
-            "active"
-        );
-    }
-
-    const form =
-        document.getElementById(
-            "transferForm"
-        );
-
-    if (form) {
-        form.reset();
-    }
-
-    resetBeforePhotos();
-}
-
-
-// ============================
-// RESET ENNEN-KUVAT
-// ============================
-
-function resetBeforePhotos() {
-
-    beforePhotoData =
-        createEmptyPhotos();
-
-    photoTypes.forEach(
-        type => {
-
-            const status =
-                document.getElementById(
-                    `before-${type}-status`
-                );
-
-            if (status) {
-
-                status.textContent =
-                    "Ei kuvaa";
-
-                status.classList.remove(
-                    "has-photo"
-                );
-            }
-
-            const input =
-                document.getElementById(
-                    `before-${type}`
-                );
-
-            if (input) {
-                input.value = "";
-            }
-        }
-    );
-
-    const preview =
-        document.getElementById(
-            "beforePreview"
-        );
-
-    if (preview) {
-        preview.innerHTML = "";
-    }
-
-    updateBeforePhotoCount();
-}
-
-
-// ============================
-// LISÄÄ KUVA
-// ============================
-
-async function addPhoto(
-    location,
-    type
-) {
-
-    const input =
-        document.getElementById(
-            `${location}-${type}`
-        );
-
-    if (
-        !input ||
-        !input.files ||
-        !input.files.length
-    ) {
-        return;
-    }
-
-    const target =
-        location === "before"
-            ? beforePhotoData
-            : afterPhotoData;
-
-    const file =
-        input.files[0];
+    const file = input.files[0];
 
     try {
+        const compressedImage = await compressImage(file);
 
-        const compressedImage =
-            await compressImage(
-                file
-            );
-
-        target[type] = [
-            compressedImage
-        ];
-
-        updatePhotoStatus(
-            location,
-            type
-        );
-
-        if (
-            location === "before"
-        ) {
-
+        if (section === "before") {
+            beforePhotoData[type] = compressedImage;
             updateBeforePhotoCount();
+            renderPhotoPreview("before", type, compressedImage);
+        }
 
-        } else {
-
+        if (section === "after") {
+            afterPhotoData[type] = compressedImage;
             updateAfterPhotoCount();
+            renderPhotoPreview("after", type, compressedImage);
         }
 
     } catch (error) {
-
-        console.error(
-            "Kuvan käsittely epäonnistui:",
-            error
-        );
-
-        alert(
-            "Kuvan käsittely epäonnistui. " +
-            "Kokeile ottaa kuva uudelleen."
-        );
-
-        input.value = "";
+        console.error(error);
+        alert("Kuvan lisääminen epäonnistui.");
     }
 }
 
+function updatePhotoStatus(section, type) {
+    const status = document.getElementById(
+        `${section}-${type}-status`
+    );
 
-// ============================
-// KUVAN STATUS
-// ============================
+    if (!status) return;
 
-function updatePhotoStatus(
-    location,
-    type
-) {
+    status.textContent = "✓ Kuva lisätty";
+    status.classList.add("added");
+}
 
-    const photos =
-        location === "before"
-            ? beforePhotoData
-            : afterPhotoData;
+function renderPhotoPreview(section, type, imageData) {
+    const preview = document.getElementById(
+        `${section}-${type}-preview`
+    );
 
-    const count =
-        photos[type]?.length || 0;
-
-    const status =
-        document.getElementById(
-            `${location}-${type}-status`
-        );
-
-    if (!status) {
+    if (!preview) {
+        updatePhotoStatus(section, type);
         return;
     }
 
-    if (count === 0) {
+    preview.innerHTML = `
+        <img 
+            src="${imageData}" 
+            alt="${PHOTO_NAMES[type]}"
+        >
+    `;
 
-        status.textContent =
-            "Ei kuvaa";
-
-        status.classList.remove(
-            "has-photo"
-        );
-
-    } else {
-
-        status.textContent =
-            "✓ Kuva lisätty";
-
-        status.classList.add(
-            "has-photo"
-        );
-    }
-
-    renderPhotoPreview(
-        location
-    );
+    updatePhotoStatus(section, type);
 }
-
-
-// ============================
-// ESITYSKUVAT
-// ============================
-
-function renderPhotoPreview(
-    location
-) {
-
-    const photos =
-        location === "before"
-            ? beforePhotoData
-            : afterPhotoData;
-
-    const container =
-        document.getElementById(
-            location === "before"
-                ? "beforePreview"
-                : "afterPreview"
-        );
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = "";
-
-    photoTypes.forEach(
-        type => {
-
-            const list =
-                photos[type] || [];
-
-            list.forEach(
-                photo => {
-
-                    const item =
-                        document.createElement(
-                            "div"
-                        );
-
-                    item.className =
-                        "preview-item";
-
-                    const img =
-                        document.createElement(
-                            "img"
-                        );
-
-                    img.src =
-                        photo;
-
-                    const label =
-                        document.createElement(
-                            "span"
-                        );
-
-                    label.textContent =
-                        photoNames[type];
-
-                    item.appendChild(
-                        img
-                    );
-
-                    item.appendChild(
-                        label
-                    );
-
-                    container.appendChild(
-                        item
-                    );
-                }
-            );
-        }
-    );
-}
-
-
-// ============================
-// ENNEN-KUVIEN MÄÄRÄ
-// ============================
 
 function updateBeforePhotoCount() {
+    const count = getPhotoCount(beforePhotoData);
 
-    const count =
-        getPhotoCount(
-            beforePhotoData
-        );
-
-    const element =
-        document.getElementById(
-            "beforePhotoCount"
-        );
+    const element = document.getElementById("beforePhotoCount");
 
     if (element) {
-
-        element.textContent =
-            `${count} / 5`;
+        element.textContent = `${count}/5`;
     }
 }
-
-
-// ============================
-// KOHTEEN KUVIEN MÄÄRÄ
-// ============================
 
 function updateAfterPhotoCount() {
+    const count = getPhotoCount(afterPhotoData);
 
-    const count =
-        getPhotoCount(
-            afterPhotoData
-        );
-
-    const element =
-        document.getElementById(
-            "afterPhotoCount"
-        );
+    const element = document.getElementById("afterPhotoCount");
 
     if (element) {
-
-        element.textContent =
-            `${count} / 5`;
+        element.textContent = `${count}/5`;
     }
 
-    const button =
-        document.getElementById(
-            "finishTransferBtn"
-        );
+    // KUVAT EIVÄT OLE PAKOLLISIA
+    const button = document.getElementById("finishTransferBtn");
 
-    if (!button) {
-        return;
-    }
-
-    if (
-        hasAllFivePhotos(
-            afterPhotoData
-        )
-    ) {
-
-        button.disabled =
-            false;
-
-        button.textContent =
-            "✅ Lopeta siirto";
-
-    } else {
-
-        button.disabled =
-            true;
-
-        button.textContent =
-            `📸 Lisää kaikki kuvat (${count}/5)`;
+    if (button) {
+        button.disabled = false;
+        button.textContent = "✅ Lopeta siirto";
     }
 }
 
 
-// ============================
+// =========================
 // UUDEN SIIRRON TALLENNUS
-// ============================
+// =========================
 
-const transferForm =
-    document.getElementById(
-        "transferForm"
-    );
+const transferForm = document.getElementById("transferForm");
 
 if (transferForm) {
+    transferForm.addEventListener("submit", function (event) {
+        event.preventDefault();
 
-    transferForm.addEventListener(
-        "submit",
-        function (event) {
+        const customer = document.getElementById("customer")?.value.trim();
+        const date = document.getElementById("date")?.value;
+        const time = document.getElementById("time")?.value;
+        const vehicle = document.getElementById("vehicle")?.value.trim();
+        const from = document.getElementById("from")?.value.trim();
+        const to = document.getElementById("to")?.value.trim();
+        const notes = document.getElementById("notes")?.value.trim();
 
-            event.preventDefault();
-
-            if (
-                !hasAllFivePhotos(
-                    beforePhotoData
-                )
-            ) {
-
-                alert(
-                    "Ota kaikki 5 kuvaa ennen siirron lisäämistä."
-                );
-
-                return;
-            }
-
-            const transfer = {
-
-                id: Date.now(),
-
-                customer:
-                    document
-                        .getElementById(
-                            "customer"
-                        )
-                        .value
-                        .trim(),
-
-                date:
-                    document
-                        .getElementById(
-                            "date"
-                        )
-                        .value,
-
-                time:
-                    document
-                        .getElementById(
-                            "time"
-                        )
-                        .value,
-
-                vehicle:
-                    document
-                        .getElementById(
-                            "vehicle"
-                        )
-                        .value
-                        .trim(),
-
-                from:
-                    document
-                        .getElementById(
-                            "from"
-                        )
-                        .value
-                        .trim(),
-
-                to:
-                    document
-                        .getElementById(
-                            "to"
-                        )
-                        .value
-                        .trim(),
-
-                notes:
-                    document
-                        .getElementById(
-                            "notes"
-                        )
-                        .value
-                        .trim(),
-
-                beforePhotos:
-                    beforePhotoData,
-
-                afterPhotos:
-                    createEmptyPhotos(),
-
-                status:
-                    "planned",
-
-                createdAt:
-                    new Date()
-                        .toISOString(),
-
-                completedAt:
-                    null
-            };
-
-            transfers.push(
-                transfer
-            );
-
-            const saved =
-                saveTransfers();
-
-            if (!saved) {
-
-                // Jos tallennus epäonnistui,
-                // poistetaan juuri lisätty siirto.
-                transfers.pop();
-
-                return;
-            }
-
-            closeForm();
-
-            renderTransfers();
-
-            updateDashboard();
+        if (!customer || !date || !vehicle || !from || !to) {
+            alert("Täytä pakolliset siirtotiedot.");
+            return;
         }
-    );
+
+        const newTransfer = {
+            id: Date.now(),
+
+            customer,
+            date,
+            time,
+            vehicle,
+            from,
+            to,
+            notes,
+
+            status: "pending",
+
+            createdAt: new Date().toISOString(),
+
+            // KUVAT OVAT VAPAAEHTOISIA
+            beforePhotos: normalizePhotos(beforePhotoData),
+            afterPhotos: createEmptyPhotos()
+        };
+
+        transfers.unshift(newTransfer);
+
+        const saved = saveTransfers();
+
+        if (!saved) {
+            transfers.shift();
+            return;
+        }
+
+        renderTransfers();
+        updateDashboard();
+
+        transferForm.reset();
+
+        resetBeforePhotos();
+
+        closeForm();
+    });
 }
 
 
-// ============================
-// RENDERÖI SIIRROT
-// ============================
+// =========================
+// SIIRTOJEN NÄYTTÄMINEN
+// =========================
 
 function renderTransfers() {
+    const container = document.getElementById("transferList");
 
-    const list =
-        document.getElementById(
-            "transferList"
-        );
+    if (!container) return;
 
-    if (!list) {
-        return;
-    }
+    const searchInput = document.getElementById("searchInput");
+    const filterSelect = document.getElementById("statusFilter");
 
-    const searchInput =
-        document.getElementById(
-            "searchInput"
-        );
+    const search = searchInput
+        ? searchInput.value.toLowerCase().trim()
+        : "";
 
-    const filterStatus =
-        document.getElementById(
-            "filterStatus"
-        );
+    const filter = filterSelect
+        ? filterSelect.value
+        : "all";
 
-    const search =
-        searchInput
-            ? searchInput.value
-                .toLowerCase()
-            : "";
+    let filteredTransfers = transfers.filter(transfer => {
+        const matchesSearch =
+            !search ||
+            transfer.customer.toLowerCase().includes(search) ||
+            transfer.vehicle.toLowerCase().includes(search) ||
+            transfer.from.toLowerCase().includes(search) ||
+            transfer.to.toLowerCase().includes(search);
 
-    const filter =
-        filterStatus
-            ? filterStatus.value
-            : "all";
+        const matchesFilter =
+            filter === "all" ||
+            transfer.status === filter;
 
-    const filtered =
-        transfers
-            .filter(
-                transfer => {
+        return matchesSearch && matchesFilter;
+    });
 
-                    const customer =
-                        transfer.customer ||
-                        "";
-
-                    const from =
-                        transfer.from ||
-                        "";
-
-                    const to =
-                        transfer.to ||
-                        "";
-
-                    const vehicle =
-                        transfer.vehicle ||
-                        "";
-
-                    const matchesSearch =
-
-                        customer
-                            .toLowerCase()
-                            .includes(
-                                search
-                            )
-
-                        ||
-
-                        from
-                            .toLowerCase()
-                            .includes(
-                                search
-                            )
-
-                        ||
-
-                        to
-                            .toLowerCase()
-                            .includes(
-                                search
-                            )
-
-                        ||
-
-                        vehicle
-                            .toLowerCase()
-                            .includes(
-                                search
-                            );
-
-                    const matchesFilter =
-
-                        filter === "all"
-
-                        ||
-
-                        transfer.status ===
-                        filter;
-
-                    return (
-                        matchesSearch &&
-                        matchesFilter
-                    );
-                }
-            )
-            .sort(
-                (a, b) =>
-                    b.id - a.id
-            );
-
-    if (!filtered.length) {
-
-        list.innerHTML = `
-
-            <div class="empty">
-
-                <div>🚗</div>
-
-                <h3>
-                    Ei siirtoja
-                </h3>
-
-                <p>
-                    Lisää ensimmäinen siirto
-                    painamalla "Uusi siirto".
-                </p>
-
+    if (filteredTransfers.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🚗</div>
+                <h3>Ei siirtoja</h3>
+                <p>Lisää ensimmäinen siirto painamalla "+ Uusi siirto".</p>
             </div>
-
         `;
 
         return;
     }
 
-    list.innerHTML =
-        filtered
-            .map(
-                createTransferCard
-            )
-            .join("");
+    container.innerHTML = filteredTransfers
+        .map(createTransferCard)
+        .join("");
 }
 
+function createTransferCard(transfer) {
+    const beforeCount = getPhotoCount(
+        normalizePhotos(transfer.beforePhotos)
+    );
 
-// ============================
-// SIIRTO-KORTTI
-// ============================
+    const afterCount = getPhotoCount(
+        normalizePhotos(transfer.afterPhotos)
+    );
 
-function createTransferCard(
-    transfer
-) {
+    let statusText = "Odottaa";
+    let statusClass = "pending";
 
-    const statusNames = {
+    if (transfer.status === "driving") {
+        statusText = "Ajossa";
+        statusClass = "driving";
+    }
 
-        planned:
-            "Suunniteltu",
-
-        driving:
-            "Matkalla",
-
-        completed:
-            "Valmis"
-    };
-
-    const photoCount =
-        getPhotoCount(
-            transfer.beforePhotos
-        )
-        +
-        getPhotoCount(
-            transfer.afterPhotos
-        );
+    if (transfer.status === "completed") {
+        statusText = "Valmis";
+        statusClass = "completed";
+    }
 
     return `
-
         <div class="transfer-card">
 
-            <div class="transfer-top">
+            <div class="transfer-card-top">
 
-                <div class="transfer-customer">
+                <div>
+                    <h3>${escapeHtml(transfer.customer)}</h3>
 
-                    ${escapeHtml(
-                        transfer.customer
-                    )}
-
+                    <span class="status ${statusClass}">
+                        ${statusText}
+                    </span>
                 </div>
 
-                <span
-                    class="status ${transfer.status}"
-                >
-
-                    ${
-                        statusNames[
-                            transfer.status
-                        ] ||
-                        "Suunniteltu"
-                    }
-
-                </span>
-
-            </div>
-
-            <div class="route">
-
-                <div class="route-point">
-
-                    📍
-
-                    <strong>
-                        Lähtö
-                    </strong>
-
-                    <br>
-
-                    ${escapeHtml(
-                        transfer.from
-                    )}
-
-                </div>
-
-                <div class="route-arrow">
-                    ➜
-                </div>
-
-                <div class="route-point">
-
-                    🏁
-
-                    <strong>
-                        Kohde
-                    </strong>
-
-                    <br>
-
-                    ${escapeHtml(
-                        transfer.to
-                    )}
-
+                <div class="transfer-date">
+                    ${formatDate(transfer.date)}
+                    ${transfer.time ? `• ${escapeHtml(transfer.time)}` : ""}
                 </div>
 
             </div>
 
             <div class="transfer-info">
 
-                <span>
-                    📅
-                    ${formatDate(
-                        transfer.date
-                    )}
-                </span>
+                <div>
+                    🚗
+                    <strong>
+                        ${escapeHtml(transfer.vehicle)}
+                    </strong>
+                </div>
 
-                <span>
-                    🕐
-                    ${transfer.time}
-                </span>
+                <div>
+                    📍
+                    ${escapeHtml(transfer.from)}
+                    →
+                    ${escapeHtml(transfer.to)}
+                </div>
 
-                ${
-                    transfer.vehicle
-                        ?
-                        `
-                            <span>
-                                🚗
-                                ${escapeHtml(
-                                    transfer.vehicle
-                                )}
-                            </span>
-                        `
-                        :
-                        ""
-                }
-
-                <span>
-                    📸
-                    ${photoCount} kuvaa
-                </span>
+                <div>
+                    📸 Ennen: ${beforeCount}/5
+                    &nbsp;&nbsp;
+                    📸 Jälkeen: ${afterCount}/5
+                </div>
 
             </div>
+
+            ${
+                transfer.notes
+                    ? `
+                    <div class="transfer-notes">
+                        📝 ${escapeHtml(transfer.notes)}
+                    </div>
+                    `
+                    : ""
+            }
 
             <div class="transfer-actions">
 
                 <button
-                    class="action-btn primary"
+                    class="btn secondary"
                     onclick="showDetails(${transfer.id})"
                 >
-                    👁️ Avaa
-                </button>
-
-                <button
-                    class="action-btn"
-                    onclick="openMaps(${transfer.id})"
-                >
-                    🗺️ Reitti
+                    👁️ Tiedot
                 </button>
 
                 ${
-                    transfer.status === "planned"
-                        ?
+                    transfer.status !== "completed"
+                        ? `
+                        <button
+                            class="btn primary"
+                            onclick="openMaps(${transfer.id})"
+                        >
+                            🗺️ Reitti
+                        </button>
                         `
-                            <button
-                                class="action-btn"
-                                onclick="changeStatus(
-                                    ${transfer.id},
-                                    'driving'
-                                )"
-                            >
-                                🚗 Aloita ajo
-                            </button>
+                        : ""
+                }
+
+                ${
+                    transfer.status === "pending"
+                        ? `
+                        <button
+                            class="btn success"
+                            onclick="changeStatus(${transfer.id}, 'driving')"
+                        >
+                            🚗 Aloita
+                        </button>
                         `
-                        :
-                        ""
+                        : ""
                 }
 
                 ${
                     transfer.status === "driving"
-                        ?
+                        ? `
+                        <button
+                            class="btn success"
+                            onclick="openFinishModal(${transfer.id})"
+                        >
+                            ✅ Lopeta
+                        </button>
                         `
-                            <button
-                                class="action-btn finish-action"
-                                onclick="openFinishModal(
-                                    ${transfer.id}
-                                )"
-                            >
-                                🏁 Lopeta siirto
-                            </button>
-                        `
-                        :
-                        ""
+                        : ""
                 }
 
                 <button
-                    class="action-btn danger"
+                    class="btn danger"
                     onclick="deleteTransfer(${transfer.id})"
                 >
-                    🗑️ Poista
+                    🗑️
                 </button>
 
             </div>
 
         </div>
-
     `;
 }
 
 
-// ============================
-// ALOITA AJO
-// ============================
+// =========================
+// STATUS
+// =========================
 
-function changeStatus(
-    id,
-    status
-) {
+function changeStatus(id, newStatus) {
+    const transfer = transfers.find(
+        transfer => transfer.id === id
+    );
 
-    const transfer =
-        transfers.find(
-            t => t.id === id
-        );
+    if (!transfer) return;
 
-    if (!transfer) {
-        return;
-    }
+    transfer.status = newStatus;
 
-    transfer.status =
-        status;
-
-    if (
-        status === "driving"
-    ) {
-
-        transfer.startedAt =
-            new Date()
-                .toISOString();
-    }
-
-    if (!saveTransfers()) {
-        return;
-    }
-
+    saveTransfers();
     renderTransfers();
-
     updateDashboard();
 }
 
 
-// ============================
-// AVAA LOPETUS
-// ============================
+// =========================
+// LOPETA SIIRTO
+// =========================
 
 function openFinishModal(id) {
+    const transfer = transfers.find(
+        transfer => transfer.id === id
+    );
 
-    const transfer =
-        transfers.find(
-            t => t.id === id
-        );
+    if (!transfer) return;
 
-    if (!transfer) {
-        return;
-    }
+    finishingTransferId = id;
 
-    finishingTransferId =
-        id;
-
-    afterPhotoData =
-        normalizePhotos(
-            transfer.afterPhotos
-        );
-
-    const vehicle =
-        document.getElementById(
-            "finishVehicle"
-        );
-
-    if (vehicle) {
-
-        vehicle.textContent =
-            transfer.vehicle ||
-            "Ajoneuvo";
-    }
-
-    const route =
-        document.getElementById(
-            "finishRoute"
-        );
-
-    if (route) {
-
-        route.textContent =
-            `${transfer.from} → ${transfer.to}`;
-    }
+    afterPhotoData = normalizePhotos(
+        transfer.afterPhotos
+    );
 
     resetAfterPhotoInterface();
 
-    const modal =
-        document.getElementById(
-            "finishModal"
-        );
+    const modal = document.getElementById("finishModal");
 
     if (modal) {
-
-        modal.classList.add(
-            "active"
-        );
+        modal.classList.add("active");
     }
-}
-
-
-// ============================
-// KOHTEEN KUVIEN RESET
-// ============================
-
-function resetAfterPhotoInterface() {
-
-    photoTypes.forEach(
-        type => {
-
-            const status =
-                document.getElementById(
-                    `after-${type}-status`
-                );
-
-            if (status) {
-
-                const hasPhoto =
-                    afterPhotoData[type] &&
-                    afterPhotoData[type].length;
-
-                if (hasPhoto) {
-
-                    status.textContent =
-                        "✓ Kuva lisätty";
-
-                    status.classList.add(
-                        "has-photo"
-                    );
-
-                } else {
-
-                    status.textContent =
-                        "Ei kuvaa";
-
-                    status.classList.remove(
-                        "has-photo"
-                    );
-                }
-            }
-
-            const input =
-                document.getElementById(
-                    `after-${type}`
-                );
-
-            if (input) {
-                input.value = "";
-            }
-        }
-    );
-
-    renderPhotoPreview(
-        "after"
-    );
 
     updateAfterPhotoCount();
 }
 
+function resetAfterPhotoInterface() {
+    PHOTO_TYPES.forEach(type => {
+        const input = document.getElementById(`after-${type}`);
 
-// ============================
-// SULJE LOPETUS
-// ============================
+        if (input) {
+            input.value = "";
+        }
 
-function closeFinishModal() {
+        const existingPhoto = afterPhotoData[type];
 
-    const modal =
-        document.getElementById(
-            "finishModal"
-        );
+        if (existingPhoto) {
+            renderPhotoPreview(
+                "after",
+                type,
+                existingPhoto
+            );
+        } else {
+            const preview = document.getElementById(
+                `after-${type}-preview`
+            );
 
-    if (modal) {
+            if (preview) {
+                preview.innerHTML = "";
+            }
 
-        modal.classList.remove(
-            "active"
-        );
-    }
+            const status = document.getElementById(
+                `after-${type}-status`
+            );
 
-    finishingTransferId =
-        null;
+            if (status) {
+                status.textContent = "";
+                status.classList.remove("added");
+            }
+        }
+    });
 
-    afterPhotoData =
-        createEmptyPhotos();
+    updateAfterPhotoCount();
 }
 
+function closeFinishModal() {
+    const modal = document.getElementById("finishModal");
 
-// ============================
-// LOPETA SIIRTO
-// ============================
+    if (modal) {
+        modal.classList.remove("active");
+    }
+
+    finishingTransferId = null;
+}
 
 function finishTransfer() {
-
     if (!finishingTransferId) {
         return;
     }
 
-    if (
-        !hasAllFivePhotos(
-            afterPhotoData
-        )
-    ) {
-
-        alert(
-            "Ota kaikki 5 kuvaa ennen siirron lopettamista."
-        );
-
-        return;
-    }
-
-    const transfer =
-        transfers.find(
-            t =>
-                t.id ===
-                finishingTransferId
-        );
+    const transfer = transfers.find(
+        transfer => transfer.id === finishingTransferId
+    );
 
     if (!transfer) {
         return;
     }
 
-    transfer.afterPhotos =
-        afterPhotoData;
+    // KUVIA EI ENÄÄ TARKISTETA TÄSSÄ
 
-    transfer.status =
-        "completed";
+    transfer.afterPhotos = normalizePhotos(
+        afterPhotoData
+    );
 
-    transfer.completedAt =
-        new Date()
-            .toISOString();
+    transfer.status = "completed";
+    transfer.completedAt = new Date().toISOString();
 
-    if (!saveTransfers()) {
+    const saved = saveTransfers();
+
+    if (!saved) {
         return;
     }
 
-    closeFinishModal();
-
     renderTransfers();
-
     updateDashboard();
+
+    closeFinishModal();
 }
 
 
-// ============================
-// POISTA
-// ============================
+// =========================
+// POISTA SIIRTO
+// =========================
 
 function deleteTransfer(id) {
+    const transfer = transfers.find(
+        transfer => transfer.id === id
+    );
 
-    const transfer =
-        transfers.find(
-            t => t.id === id
-        );
+    if (!transfer) return;
 
-    if (!transfer) {
-        return;
-    }
-
-    const confirmed =
-        confirm(
-            `Poistetaanko siirto ${transfer.customer}?`
-        );
+    const confirmed = confirm(
+        `Poistetaanko siirto "${transfer.customer}"?`
+    );
 
     if (!confirmed) {
         return;
     }
 
-    transfers =
-        transfers.filter(
-            t => t.id !== id
-        );
+    transfers = transfers.filter(
+        transfer => transfer.id !== id
+    );
 
     saveTransfers();
 
     renderTransfers();
-
     updateDashboard();
 }
 
 
-// ============================
+// =========================
 // GOOGLE MAPS
-// ============================
+// =========================
 
 function openMaps(id) {
+    const transfer = transfers.find(
+        transfer => transfer.id === id
+    );
 
-    const transfer =
-        transfers.find(
-            t => t.id === id
-        );
+    if (!transfer) return;
 
-    if (!transfer) {
-        return;
-    }
+    const origin = encodeURIComponent(
+        transfer.from
+    );
 
-    const from =
-        encodeURIComponent(
-            transfer.from
-        );
-
-    const to =
-        encodeURIComponent(
-            transfer.to
-        );
+    const destination = encodeURIComponent(
+        transfer.to
+    );
 
     const url =
         `https://www.google.com/maps/dir/?api=1` +
-        `&origin=${from}` +
-        `&destination=${to}`;
+        `&origin=${origin}` +
+        `&destination=${destination}`;
 
-    window.open(
-        url,
-        "_blank"
-    );
+    window.open(url, "_blank");
 }
 
 
-// ============================
+// =========================
 // TIEDOT
-// ============================
+// =========================
 
 function showDetails(id) {
+    const transfer = transfers.find(
+        transfer => transfer.id === id
+    );
 
-    const transfer =
-        transfers.find(
-            t => t.id === id
-        );
+    if (!transfer) return;
 
-    if (!transfer) {
-        return;
-    }
+    const modal = document.getElementById("detailsModal");
+    const content = document.getElementById("detailsContent");
 
-    document.getElementById(
-        "detailsTitle"
-    ).textContent =
-        `🚗 ${transfer.customer}`;
+    if (!modal || !content) return;
 
-    document.getElementById(
-        "detailsContent"
-    ).innerHTML = `
+    const beforePhotos = normalizePhotos(
+        transfer.beforePhotos
+    );
 
-        <div class="details-row">
+    const afterPhotos = normalizePhotos(
+        transfer.afterPhotos
+    );
 
-            <strong>
-                📍 Reitti
-            </strong>
+    content.innerHTML = `
+        <div class="details-section">
 
-            ${escapeHtml(
-                transfer.from
-            )}
+            <h3>🚗 Siirron tiedot</h3>
 
-            →
+            <p>
+                <strong>Asiakas:</strong>
+                ${escapeHtml(transfer.customer)}
+            </p>
 
-            ${escapeHtml(
-                transfer.to
-            )}
+            <p>
+                <strong>Auto:</strong>
+                ${escapeHtml(transfer.vehicle)}
+            </p>
 
-        </div>
-
-        <div class="details-row">
-
-            <strong>
-                📅 Aika
-            </strong>
-
-            ${formatDate(
-                transfer.date
-            )}
-
-            klo
-
-            ${transfer.time}
-
-        </div>
-
-        <div class="details-row">
-
-            <strong>
-                🚗 Ajoneuvo
-            </strong>
+            <p>
+                <strong>Päivä:</strong>
+                ${formatDate(transfer.date)}
+            </p>
 
             ${
-                transfer.vehicle
-                    ?
-                    escapeHtml(
-                        transfer.vehicle
-                    )
-                    :
-                    "Ei ilmoitettu"
+                transfer.time
+                    ? `
+                    <p>
+                        <strong>Aika:</strong>
+                        ${escapeHtml(transfer.time)}
+                    </p>
+                    `
+                    : ""
             }
 
-        </div>
+            <p>
+                <strong>Lähtö:</strong>
+                ${escapeHtml(transfer.from)}
+            </p>
 
-        <div class="details-row">
-
-            <strong>
-                📝 Lisätiedot
-            </strong>
+            <p>
+                <strong>Kohde:</strong>
+                ${escapeHtml(transfer.to)}
+            </p>
 
             ${
                 transfer.notes
-                    ?
-                    escapeHtml(
-                        transfer.notes
-                    )
-                    :
-                    "Ei lisätietoja"
+                    ? `
+                    <p>
+                        <strong>Muistiinpanot:</strong>
+                        ${escapeHtml(transfer.notes)}
+                    </p>
+                    `
+                    : ""
             }
 
         </div>
 
-        <div class="details-row">
+        <div class="details-section">
 
-            <strong>
-                📸 Kuvat ennen lähtöä
-            </strong>
+            <h3>
+                📸 Ennen
+                (${getPhotoCount(beforePhotos)}/5)
+            </h3>
 
-            ${createDetailsPhotos(
-                transfer.beforePhotos
-            )}
-
-        </div>
-
-        <div class="details-row">
-
-            <strong>
-                🏁 Kuvat kohteessa
-            </strong>
-
-            ${createDetailsPhotos(
-                transfer.afterPhotos
-            )}
+            <div class="details-photos">
+                ${createDetailsPhotos(beforePhotos)}
+            </div>
 
         </div>
 
+        <div class="details-section">
+
+            <h3>
+                📸 Jälkeen
+                (${getPhotoCount(afterPhotos)}/5)
+            </h3>
+
+            <div class="details-photos">
+                ${createDetailsPhotos(afterPhotos)}
+            </div>
+
+        </div>
     `;
 
-    document
-        .getElementById(
-            "detailsModal"
-        )
-        .classList.add(
-            "active"
-        );
+    modal.classList.add("active");
 }
 
+function createDetailsPhotos(photos) {
+    return PHOTO_TYPES
+        .map(type => {
+            if (!photos[type]) {
+                return `
+                    <div class="details-photo empty">
+                        <span>${PHOTO_NAMES[type]}</span>
+                        <small>Ei kuvaa</small>
+                    </div>
+                `;
+            }
 
-// ============================
-// DETAILSIEN KUVAT
-// ============================
+            return `
+                <div class="details-photo">
 
-function createDetailsPhotos(
-    photos
-) {
+                    <img
+                        src="${photos[type]}"
+                        alt="${PHOTO_NAMES[type]}"
+                    >
 
-    const normalized =
-        normalizePhotos(
-            photos
-        );
+                    <span>
+                        ${PHOTO_NAMES[type]}
+                    </span>
 
-    const count =
-        getPhotoCount(
-            normalized
-        );
-
-    if (!count) {
-
-        return `
-            <p class="no-photos">
-                Ei kuvia.
-            </p>
-        `;
-    }
-
-    let html =
-        `<div class="details-photo-grid">`;
-
-    photoTypes.forEach(
-        type => {
-
-            const list =
-                normalized[type] ||
-                [];
-
-            list.forEach(
-                photo => {
-
-                    html += `
-
-                        <div
-                            class="details-photo-item"
-                        >
-
-                            <img
-                                src="${photo}"
-                                alt="${photoNames[type]}"
-                            >
-
-                            <span>
-                                ${photoNames[type]}
-                            </span>
-
-                        </div>
-
-                    `;
-                }
-            );
-        }
-    );
-
-    html +=
-        `</div>`;
-
-    return html;
+                </div>
+            `;
+        })
+        .join("");
 }
-
-
-// ============================
-// SULJE DETAILS
-// ============================
 
 function closeDetails() {
-
-    const modal =
-        document.getElementById(
-            "detailsModal"
-        );
+    const modal = document.getElementById("detailsModal");
 
     if (modal) {
-
-        modal.classList.remove(
-            "active"
-        );
+        modal.classList.remove("active");
     }
 }
 
 
-// ============================
+// =========================
 // DASHBOARD
-// ============================
+// =========================
 
 function updateDashboard() {
+    const total = transfers.length;
 
-    const totalCount =
-        document.getElementById(
-            "totalCount"
-        );
+    const todayString =
+        new Date().toISOString().split("T")[0];
 
-    if (totalCount) {
+    const today = transfers.filter(
+        transfer => transfer.date === todayString
+    ).length;
 
-        totalCount.textContent =
-            transfers.length;
+    const driving = transfers.filter(
+        transfer => transfer.status === "driving"
+    ).length;
+
+    const completed = transfers.filter(
+        transfer => transfer.status === "completed"
+    ).length;
+
+    const totalElement =
+        document.getElementById("totalTransfers");
+
+    const todayElement =
+        document.getElementById("todayTransfers");
+
+    const drivingElement =
+        document.getElementById("drivingTransfers");
+
+    const completedElement =
+        document.getElementById("completedTransfers");
+
+    if (totalElement) {
+        totalElement.textContent = total;
     }
 
-    // Käytetään paikallista päivämäärää
-    // eikä UTC-päivämäärää.
-    const now =
-        new Date();
-
-    const year =
-        now.getFullYear();
-
-    const month =
-        String(
-            now.getMonth() + 1
-        ).padStart(
-            2,
-            "0"
-        );
-
-    const day =
-        String(
-            now.getDate()
-        ).padStart(
-            2,
-            "0"
-        );
-
-    const today =
-        `${year}-${month}-${day}`;
-
-    const todayCount =
-        document.getElementById(
-            "todayCount"
-        );
-
-    if (todayCount) {
-
-        todayCount.textContent =
-            transfers.filter(
-                t =>
-                    t.date ===
-                    today
-            ).length;
+    if (todayElement) {
+        todayElement.textContent = today;
     }
 
-    const activeCount =
-        document.getElementById(
-            "activeCount"
-        );
-
-    if (activeCount) {
-
-        activeCount.textContent =
-            transfers.filter(
-                t =>
-                    t.status ===
-                    "driving"
-            ).length;
+    if (drivingElement) {
+        drivingElement.textContent = driving;
     }
 
-    const completedCount =
-        document.getElementById(
-            "completedCount"
-        );
-
-    if (completedCount) {
-
-        completedCount.textContent =
-            transfers.filter(
-                t =>
-                    t.status ===
-                    "completed"
-            ).length;
+    if (completedElement) {
+        completedElement.textContent = completed;
     }
 }
 
 
-// ============================
+// =========================
 // PÄIVÄMÄÄRÄ
-// ============================
+// =========================
 
-function formatDate(date) {
-
-    if (!date) {
+function formatDate(dateString) {
+    if (!dateString) {
         return "";
     }
 
-    const parts =
-        date.split("-");
+    const date = new Date(dateString + "T00:00:00");
 
-    if (parts.length !== 3) {
-        return date;
-    }
-
-    return `
-        ${parts[2]}.
-        ${parts[1]}.
-        ${parts[0]}
-    `.replace(
-        /\s/g,
-        ""
+    return date.toLocaleDateString(
+        "fi-FI",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        }
     );
 }
 
 
-// ============================
-// HTML TURVALLISUUS
-// ============================
+// =========================
+// TURVALLINEN HTML
+// =========================
 
-function escapeHtml(text) {
-
-    if (!text) {
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
         return "";
     }
 
-    return String(text)
-
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
-// ============================
+// =========================
+// HAKU JA SUODATUS
+// =========================
+
+const searchInput = document.getElementById("searchInput");
+
+if (searchInput) {
+    searchInput.addEventListener(
+        "input",
+        renderTransfers
+    );
+}
+
+const statusFilter = document.getElementById("statusFilter");
+
+if (statusFilter) {
+    statusFilter.addEventListener(
+        "change",
+        renderTransfers
+    );
+}
+
+
+// =========================
+// MODAALIEN SULKEMINEN
+// =========================
+
+document.addEventListener("click", function (event) {
+    if (event.target.classList.contains("modal")) {
+        event.target.classList.remove("active");
+    }
+});
+
+
+// =========================
 // KÄYNNISTYS
-// ============================
+// =========================
 
 loadTransfers();
-```
